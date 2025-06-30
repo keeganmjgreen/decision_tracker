@@ -106,8 +106,12 @@ class Expression:
             operand_records.extend(y)
         return evaluated_expression_records, operand_records
 
-    def __str__(self):
+    @property
+    def reason(self) -> str:
         return f"{self._name} := {self.value}"
+
+    def __str__(self):
+        return self.reason
 
 
 class Not(Expression):
@@ -133,21 +137,21 @@ class Not(Expression):
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            Or(operands=[Not(o) for o in self.operand.operands])
-            if isinstance(self.operand, And)
-            else (
-                self.operand.operand
-                if isinstance(self.operand, Not)
-                else Not(self.operand)
-            )
+            Not(self.operand.evaluated_expression)
+            if self.value
+            else self.operand.evaluated_expression
         )
+
+    @property
+    def reason(self) -> str:
+        return self.operand.reason
 
     def __str__(self):
         return (
-            f"{self._name} := {self.value} because {self._name} := "
-            if self._name
-            else ""
-        ) + f"!({self.operand})"
+            (f"{self._name} := " if self._name else "")
+            + f"{self.value} because "
+            + self.reason
+        )
 
 
 class And(Expression):
@@ -174,18 +178,25 @@ class And(Expression):
 
     @property
     def evaluated_expression(self) -> Expression[bool]:
-        x = And([o.evaluated_expression for o in self.operands])
-        return x if self.value else Not(x).evaluated_expression
+        return (
+            And([o.evaluated_expression for o in self.operands])
+            if self.value
+            else Or([Not(o) for o in self.operands if not o.value]).evaluated_expression
+        )
+
+    @property
+    def reason(self) -> str:
+        return (
+            " and ".join(f"({o.reason})" for o in self.operands)
+            if self.value
+            else self.evaluated_expression.reason
+        )
 
     def __str__(self):
         return (
-            f"{self._name} := {self.value} because {self._name} := "
-            if self._name
-            else ""
-        ) + (
-            " and ".join(f"({o})" for o in self.operands)
-            if self.value
-            else str(self.evaluated_expression)
+            (f"{self._name} := " if self._name else "")
+            + f"{self.value} because "
+            + self.reason
         )
 
 
@@ -209,20 +220,24 @@ class Or(Expression):
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            next(o.evaluated_expression for o in self.operands if o.value)
+            Or([o.evaluated_expression for o in self.operands if o.value])
             if self.value
-            else Not(Or([o.evaluated_expression for o in self.operands]))
+            else And([Not(o) for o in self.operands]).evaluated_expression
+        )
+
+    @property
+    def reason(self) -> str:
+        return (
+            " or ".join(f"({o.reason})" for o in self.operands)
+            if self.value
+            else self.evaluated_expression.reason
         )
 
     def __str__(self):
         return (
-            f"{self._name} := {self.value} because {self._name} := "
-            if self._name
-            else ""
-        ) + (
-            " or ".join(f"({o})" for o in self.operands)
-            if self.value
-            else str(self.evaluated_expression)
+            (f"{self._name} := " if self._name else "")
+            + f"{self.value} because "
+            + self.reason
         )
 
 
@@ -265,21 +280,13 @@ class Conditional(Expression):
 
     @property
     def evaluated_expression(self) -> Expression[bool]:
-        return (
-            self.condition.evaluated_expression
-            if _value(self.condition)
-            else Not(
-                Expression(True).with_name(self.condition._name)
-                if type(self.condition) is Expression
-                else self.condition.evaluated_expression
-            )
-        )
+        return self.condition.evaluated_expression
 
     def __str__(self):
         return (
             (f"{self._name} := " if self._name else "")
             + f"{self.value} because "
-            + str(self.evaluated_expression)
+            + self.evaluated_expression.reason
         )
 
 
