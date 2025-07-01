@@ -1,6 +1,7 @@
 [project]
 name = "bodkin"
 version = "1.0.0"
+requires-python = ">=3.9"
 
 [tool.pytest.ini_options]
 pythonpath = "src/"
@@ -12,3 +13,7 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "I", "N", "DTZ", "RUF", "PERF"]
+
+[tool.poetry.dependencies]
+sqlalchemy = "^2.0.41"
+pytest = "^8.4.1"

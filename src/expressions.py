@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import dataclasses
 from copy import deepcopy
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Literal, Self
 from uuid import UUID, uuid4
 
-import records as records
+from schema import EvaluatedExpressionRecord
 from utils import get_exactly_one
 
 
@@ -20,6 +20,8 @@ class Expression:
     value: Any
     _id: UUID
     _name: str | None = None
+    _operator: ClassVar[str | None] = None
+    _operands: list[Expression]
 
     def __init__(
         self,
@@ -83,28 +85,14 @@ class Expression:
         return self
 
     @property
-    def flattened(
-        self,
-    ) -> tuple[list[records.EvaluatedExpressionRecord], list[records.OperandRecord]]:
-        evaluated_expression_records = [
-            records.EvaluatedExpressionRecord(
-                id=self._id,
-                name=self.name,
-                operand=self.operand,
-            )
-        ]
-        operand_records = [
-            records.OperandRecord(
-                used_in_evaluated_expression_id=self._id,
-                value=(self.value or o.id),
-            )
-            for o in self.operands
-        ]
-        for operand in self.operands:
-            x, y = operand.flattened
-            evaluated_expression_records.extend(x)
-            operand_records.extend(y)
-        return evaluated_expression_records, operand_records
+    def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
+        return EvaluatedExpressionRecord(
+            id=self._id,
+            name=self._name,
+            value=self.value,
+            operator=self._operator,
+            children=[o.evaluated_expression_record for o in self._operands],
+        )
 
     @property
     def reason(self) -> str:
@@ -115,36 +103,36 @@ class Expression:
 
 
 class Not(Expression):
-    operator: ClassVar[str] = "not"
-    operand: Expression[bool]
+    _operator: ClassVar[Literal["not"]] = "not"
+    _operand: Expression[bool]
 
     def __init__(
         self,
         *unnamed_conditions: tuple[Expression[bool], ...],
         **named_conditions: dict[str, Expression[bool] | bool],
     ) -> None:
-        self.operand = _handle_expressions(unnamed_conditions, named_conditions)
+        self._operand = _handle_expressions(unnamed_conditions, named_conditions)
         self._id = uuid4()
 
     @property
-    def operands(self) -> list[Expression[bool] | bool]:
-        return [self.operand]
+    def _operands(self) -> list[Expression[bool] | bool]:
+        return [self._operand]
 
     @property
     def value(self) -> bool:
-        return not self.operand.value
+        return not self._operand.value
 
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            Not(self.operand.evaluated_expression)
+            Not(self._operand.evaluated_expression)
             if self.value
-            else self.operand.evaluated_expression
+            else self._operand.evaluated_expression
         )
 
     @property
     def reason(self) -> str:
-        return self.operand.reason
+        return self._operand.reason
 
     def __str__(self):
         return (
@@ -155,39 +143,41 @@ class Not(Expression):
 
 
 class And(Expression):
-    operator: ClassVar[str] = "and"
-    operands: list[Expression[bool] | bool]
+    _operator: ClassVar[Literal["and"]] = "and"
+    _operands: list[Expression[bool] | bool]
 
     def __init__(
         self,
         *unnamed_conditions: tuple[Expression[bool], ...],
         **named_conditions: dict[str, Expression[bool] | bool],
     ) -> None:
-        self.operands = _handle_expressions(
+        self._operands = _handle_expressions(
             unnamed_conditions, named_conditions, consolidate_multiple=False
         )
         self._id = uuid4()
 
     @property
     def and_operands(self) -> list[Expression[bool] | bool]:
-        return self.operands
+        return self._operands
 
     @property
     def value(self) -> bool:
-        return all(o.value for o in self.operands)
+        return all(o.value for o in self._operands)
 
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            And([o.evaluated_expression for o in self.operands])
+            And([o.evaluated_expression for o in self._operands])
             if self.value
-            else Or([Not(o) for o in self.operands if not o.value]).evaluated_expression
+            else Or(
+                [Not(o) for o in self._operands if not o.value]
+            ).evaluated_expression
         )
 
     @property
     def reason(self) -> str:
         return (
-            " and ".join(f"({o.reason})" for o in self.operands)
+            " and ".join(f"({o.reason})" for o in self._operands)
             if self.value
             else self.evaluated_expression.reason
         )
@@ -202,33 +192,33 @@ class And(Expression):
 
 @dataclasses.dataclass
 class Or(Expression):
-    operator: ClassVar[str] = "or"
-    operands: list[Expression[bool] | bool]
+    _operator: ClassVar[Literal["or"]] = "or"
+    _operands: list[Expression[bool] | bool]
 
     def __init__(self, operands: Expression[bool] | bool) -> None:
-        self.operands = operands
+        self._operands = operands
         self._id = uuid4()
 
     @property
     def or_operands(self) -> list[Expression[bool] | bool]:
-        return self.operands
+        return self._operands
 
     @property
     def value(self) -> bool:
-        return any(o.value for o in self.operands)
+        return any(o.value for o in self._operands)
 
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            Or([o.evaluated_expression for o in self.operands if o.value])
+            Or([o.evaluated_expression for o in self._operands if o.value])
             if self.value
-            else And([Not(o) for o in self.operands]).evaluated_expression
+            else And([Not(o) for o in self._operands]).evaluated_expression
         )
 
     @property
     def reason(self) -> str:
         return (
-            " or ".join(f"({o.reason})" for o in self.operands)
+            " or ".join(f"({o.reason})" for o in self._operands)
             if self.value
             else self.evaluated_expression.reason
         )
@@ -243,14 +233,14 @@ class Or(Expression):
 
 @dataclasses.dataclass
 class IncompleteConditional:
-    result_if_true: Expression
-    condition: Expression[bool] | bool
+    _result_if_true: Expression
+    _condition: Expression[bool] | bool
 
     def __init__(
         self, result_if_true: Expression, condition: Expression[bool] | bool
     ) -> None:
-        self.result_if_true = result_if_true
-        self.condition = condition
+        self._result_if_true = result_if_true
+        self._condition = condition
 
     def else_(
         self,
@@ -258,29 +248,31 @@ class IncompleteConditional:
         **named_expressions: dict[str, Expression[bool] | bool],
     ) -> Conditional:
         return Conditional(
-            self.result_if_true,
-            self.condition,
-            result_if_false=_handle_expressions(unnamed_expressions, named_expressions),
+            self._result_if_true,
+            self._condition,
+            _result_if_false=_handle_expressions(
+                unnamed_expressions, named_expressions
+            ),
         )
 
 
 @dataclasses.dataclass
 class Conditional(Expression):
-    result_if_true: Expression | Any
-    condition: Expression[bool]
-    result_if_false: Expression | Any
+    _result_if_true: Expression | Any
+    _condition: Expression[bool]
+    _result_if_false: Expression | Any
 
     @property
     def value(self) -> bool:
         return (
-            _value(self.result_if_true)
-            if _value(self.condition)
-            else _value(self.result_if_false)
+            _value(self._result_if_true)
+            if _value(self._condition)
+            else _value(self._result_if_false)
         )
 
     @property
     def evaluated_expression(self) -> Expression[bool]:
-        return self.condition.evaluated_expression
+        return self._condition.evaluated_expression
 
     def __str__(self):
         return (
