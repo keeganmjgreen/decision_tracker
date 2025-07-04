@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Tree, { renderers } from 'react-virtualized-tree';
+import './styles.css'
 
 export const NODES = [
     {
@@ -29,16 +30,14 @@ class App extends Component {
 
     render() {
         return (
-            <div style={{ height: 500 }}>
-                <Tree nodes={this.state.nodes} onChange={this.handleChange}>
-                    {({ style, node, ...rest }) => (
-                        <div style={style}>
-                            <renderers.Expandable node={node} {...rest}>
-                                <code>{node.name}</code>
-                            </renderers.Expandable>
-                        </div>
-                    )}
-                </Tree>
+            <div>
+                <div class="expression">y := True</div>
+                <div class="indented">
+                    <div class="because">because</div>
+                    <div class="expression">a := True</div>
+                    <div class="operator">and</div>
+                    <div class="expression">b := True</div>
+                </div>
             </div>
         );
     }

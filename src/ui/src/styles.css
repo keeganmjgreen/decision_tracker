@@ -1,0 +1,17 @@
+.expression {
+    font-family: monospace;
+}
+
+.indented {
+    margin-left: 25px;
+}
+
+.because {
+    font-size: small;
+    opacity: 50%;
+}
+
+.operator {
+    font-size: small;
+    opacity: 50%;
+}
