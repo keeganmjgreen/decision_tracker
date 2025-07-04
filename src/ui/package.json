@@ -1,0 +1,30 @@
+{
+    "name": "react.dev",
+    "version": "0.0.0",
+    "main": "/src/ui/index.js",
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test --env=jsdom",
+        "eject": "react-scripts eject"
+    },
+    "dependencies": {
+        "react": "^16.14.0",
+        "react-dom": "^16.14.0",
+        "react-scripts": "^5.0.1",
+        "react-virtualized-tree": "^3.4.1",
+        "styled-components": "^6.1.19"
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
+}
