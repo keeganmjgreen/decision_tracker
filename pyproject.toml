@@ -17,3 +17,5 @@ select = ["E", "F", "W", "B", "I", "N", "DTZ", "RUF", "PERF"]
 [tool.poetry.dependencies]
 sqlalchemy = "^2.0.41"
 pytest = "^8.4.1"
+pytest-postgresql = "^7.0.2"
+psycopg2-binary = "^2.9.10"

@@ -5,6 +5,9 @@ from copy import deepcopy
 from typing import Any, ClassVar, Literal, Self
 from uuid import UUID, uuid4
 
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session
+
 from schema import EvaluatedExpressionRecord
 from utils import get_exactly_one
 
@@ -19,7 +22,7 @@ def _value(x: Expression | Any) -> Any:
 class Expression:
     value: Any
     _id: UUID
-    _name: str | None = None
+    _name: str | None
     _operator: ClassVar[str | None] = None
     _operands: list[Expression]
 
@@ -32,6 +35,8 @@ class Expression:
             unnamed_expressions, named_expressions, allow_multiple=False
         )
         self._id = uuid4()
+        self._name = None
+        self._operands = []
 
     def with_name(self, name: str) -> Self:
         self = deepcopy(self)
@@ -98,8 +103,13 @@ class Expression:
     def reason(self) -> str:
         return f"{self._name} := {self.value}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.reason
+
+    def to_db(self, db_engine: Engine) -> None:
+        with Session(db_engine) as session:
+            session.add(self.evaluated_expression_record)  # Also adds children.
+            session.commit()
 
 
 class Not(Expression):
@@ -111,8 +121,9 @@ class Not(Expression):
         *unnamed_conditions: tuple[Expression[bool], ...],
         **named_conditions: dict[str, Expression[bool] | bool],
     ) -> None:
-        self._operand = _handle_expressions(unnamed_conditions, named_conditions)
         self._id = uuid4()
+        self._name = None
+        self._operand = _handle_expressions(unnamed_conditions, named_conditions)
 
     @property
     def _operands(self) -> list[Expression[bool] | bool]:
@@ -151,10 +162,11 @@ class And(Expression):
         *unnamed_conditions: tuple[Expression[bool], ...],
         **named_conditions: dict[str, Expression[bool] | bool],
     ) -> None:
+        self._id = uuid4()
+        self._name = None
         self._operands = _handle_expressions(
             unnamed_conditions, named_conditions, consolidate_multiple=False
         )
-        self._id = uuid4()
 
     @property
     def and_operands(self) -> list[Expression[bool] | bool]:
@@ -195,9 +207,16 @@ class Or(Expression):
     _operator: ClassVar[Literal["or"]] = "or"
     _operands: list[Expression[bool] | bool]
 
-    def __init__(self, operands: Expression[bool] | bool) -> None:
-        self._operands = operands
+    def __init__(
+        self,
+        *unnamed_conditions: tuple[Expression[bool], ...],
+        **named_conditions: dict[str, Expression[bool] | bool],
+    ) -> None:
         self._id = uuid4()
+        self._name = None
+        self._operands = _handle_expressions(
+            unnamed_conditions, named_conditions, consolidate_multiple=False
+        )
 
     @property
     def or_operands(self) -> list[Expression[bool] | bool]:
@@ -233,11 +252,11 @@ class Or(Expression):
 
 @dataclasses.dataclass
 class IncompleteConditional:
-    _result_if_true: Expression
+    _result_if_true: Expression | Any
     _condition: Expression[bool] | bool
 
     def __init__(
-        self, result_if_true: Expression, condition: Expression[bool] | bool
+        self, result_if_true: Expression | Any, condition: Expression[bool] | bool
     ) -> None:
         self._result_if_true = result_if_true
         self._condition = condition
@@ -250,17 +269,25 @@ class IncompleteConditional:
         return Conditional(
             self._result_if_true,
             self._condition,
-            _result_if_false=_handle_expressions(
-                unnamed_expressions, named_expressions
-            ),
+            result_if_false=_handle_expressions(unnamed_expressions, named_expressions),
         )
 
 
-@dataclasses.dataclass
 class Conditional(Expression):
     _result_if_true: Expression | Any
     _condition: Expression[bool]
     _result_if_false: Expression | Any
+
+    def __init__(
+        self,
+        result_if_true: Expression | Any,
+        condition: Expression[bool] | bool,
+        result_if_false: Expression | Any,
+    ) -> None:
+        self._name = None
+        self._result_if_true = result_if_true
+        self._condition = condition
+        self._result_if_false = result_if_false
 
     @property
     def value(self) -> bool:

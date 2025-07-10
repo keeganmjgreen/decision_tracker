@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import UUID, String, Uuid, inspect
+from sqlalchemy import UUID, ForeignKeyConstraint, String, Uuid, inspect
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -23,16 +23,31 @@ class OrmDataclass(MappedAsDataclass, kw_only=True):
                 delattr(self, relationship_name)
 
 
-class EvaluatedExpressionRecord(DeclarativeBase, OrmDataclass):
-    id: Mapped[UUID] = mapped_column(Uuid, default=None)
+class Base(DeclarativeBase, OrmDataclass):
+    pass
+
+
+class EvaluatedExpressionRecord(Base):
+    __tablename__ = "evaluated_expression"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["parent_id"],
+            ["evaluated_expression.id"],
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, default=None, primary_key=True)
     parent_id: Mapped[UUID | None] = mapped_column(Uuid, default=None)
-    name: str | None = mapped_column(String, default=None)
-    value: Any = mapped_column(JSONB)
-    operator: str = mapped_column(String)
+    name: Mapped[str | None] = mapped_column(String, default=None)
+    value: Mapped[Any] = mapped_column(JSONB)
+    operator: Mapped[str | None] = mapped_column(String)
 
     parent: Mapped[EvaluatedExpressionRecord | None] = relationship(
         default=NEVER_SET, back_populates="children", remote_side=[id], repr=False
     )
     children: Mapped[list[EvaluatedExpressionRecord]] = relationship(
-        default_factory=list, back_populates="parent", remote_side=[id], repr=False
+        default_factory=list,
+        back_populates="parent",
+        remote_side=[parent_id],
+        repr=False,
     )

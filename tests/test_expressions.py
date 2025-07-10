@@ -1,12 +1,30 @@
+from uuid import UUID
+
+import sqlalchemy as sqla
+
 from expressions import And, Expression, Not
+from schema import EvaluatedExpressionRecord
 
 
-def test_not_expression():
+def test_not_expression(db_engine: sqla.Engine) -> None:
     # Test when condition is True:
     y = Not(x=True)
     assert y.value is False
     assert str(y) == "False because x := True"
     assert str(y.with_name("y")) == "y := False because x := True"
+    y.to_db(db_engine)
+    with sqla.orm.Session(db_engine) as session:
+        records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
+        record_1, record_2 = records
+        assert isinstance(record_1.id, UUID)
+        assert record_1.parent_id is None
+        assert record_1.name is None
+        assert record_1.value is False
+        assert record_1.operator == "not"
+        assert record_2.parent_id == record_1.id
+        assert record_2.name == "x"
+        assert record_2.value is True
+        assert record_2.operator is None
 
     # Test when condition is False:
     y = Not(x=False)
@@ -15,7 +33,7 @@ def test_not_expression():
     assert str(y.with_name("y")) == "y := True because x := False"
 
 
-def test_and_expression():
+def test_and_expression() -> None:
     y = And(a=True, b=True)
     assert y.value is True
     assert str(y) == "True because (a := True) and (b := True)"
@@ -27,7 +45,7 @@ def test_and_expression():
     assert str(y.with_name("y")) == "y := False because (b := False)"
 
 
-def test_if_else():
+def test_if_else() -> None:
     # Test when condition is True:
     y = Expression(1).if_(x=True).else_(2)
     assert y.value == 1
