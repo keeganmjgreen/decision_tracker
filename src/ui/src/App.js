@@ -1,6 +1,6 @@
 import { React, useState } from 'react';
-import './styles.css'
-// import EvaluatedExpression from './schema.js'
+import { evaluatedExpressionRecord } from './schema.js';
+import './styles.css';
 
 export const evaluatedExpressions = [
     {
@@ -55,7 +55,11 @@ function Expression({ evaluatedExpression }) {
 }
 
 function App() {
-    // const evaluatedExpressions = await evaluatedExpressions.findAll()
+    const sequelize = new Sequelize('postgresql://postgres:password-not-needed@127.0.0.1:19087/bodkin');
+    const EvaluatedExpressionRecord = evaluatedExpressionRecord()
+    const evaluatedExpressions = evaluatedExpressions.findAll(
+        { where: { parentId: { [Op.eq]: null } } }
+    )
     const expressions = evaluatedExpressions.map(ee => <Expression evaluatedExpression={ee} key={ee.id} />);
     return <div>{expressions}</div>;
 }
