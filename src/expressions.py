@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 from copy import deepcopy
 from typing import Any, ClassVar, Literal, Self
 from uuid import UUID, uuid4
@@ -202,7 +201,6 @@ class And(Expression):
         )
 
 
-@dataclasses.dataclass
 class Or(Expression):
     _operator: ClassVar[Literal["or"]] = "or"
     _operands: list[Expression[bool] | bool]
@@ -250,7 +248,6 @@ class Or(Expression):
         )
 
 
-@dataclasses.dataclass
 class IncompleteConditional:
     _result_if_true: Expression | Any
     _condition: Expression[bool] | bool
