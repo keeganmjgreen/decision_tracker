@@ -31,7 +31,10 @@ class Expression[T]:
         **named_expressions: Expression[T] | T,
     ) -> None:
         value = _handle_expressions(
-            unnamed_expressions, named_expressions, allow_multiple=False
+            unnamed_expressions,
+            named_expressions,
+            allow_multiple_input=False,
+            multiple_output=False,
         )
         self.value = cast(T, value)
         self._id = uuid4()
@@ -49,7 +52,7 @@ class Expression[T]:
         **named_conditions: Expression[bool] | bool,
     ) -> IncompleteConditional:
         condition = _handle_expressions(
-            unnamed_conditions, named_conditions, consolidate_multiple=True
+            unnamed_conditions, named_conditions, multiple_output=False
         )
         return IncompleteConditional(
             result_if_true=(self.value if type(self) is Expression else self),
@@ -94,7 +97,7 @@ class BooleanExpression(Expression[bool]):
             *cast(
                 Expression[bool],
                 _handle_expressions(
-                    unnamed_conditions, named_conditions, consolidate_multiple=True
+                    unnamed_conditions, named_conditions, multiple_output=False
                 ),
             )._operands,
         )
@@ -109,7 +112,7 @@ class BooleanExpression(Expression[bool]):
             cast(
                 Expression[bool],
                 _handle_expressions(
-                    unnamed_conditions, named_conditions, consolidate_multiple=True
+                    unnamed_conditions, named_conditions, multiple_output=False
                 ),
             ),
         )
@@ -135,7 +138,7 @@ class Not(Expression[bool]):
         self._id = uuid4()
         self._name = None
         operand = _handle_expressions(
-            unnamed_conditions, named_conditions, consolidate_multiple=True
+            unnamed_conditions, named_conditions, multiple_output=False
         )
         self._operand = cast(Expression[bool], operand)
 
@@ -226,9 +229,7 @@ class Or(Expression[bool]):
     ) -> None:
         self._id = uuid4()
         self._name = None
-        operands = _handle_expressions(
-            unnamed_conditions, named_conditions, consolidate_multiple=False
-        )
+        operands = _handle_expressions(unnamed_conditions, named_conditions)
         self._operands = cast(list[Expression[bool]], operands)
 
     @property
@@ -281,7 +282,12 @@ class IncompleteConditional:
         return Conditional(
             self._result_if_true,
             self._condition,
-            result_if_false=_handle_expressions(unnamed_expressions, named_expressions),
+            result_if_false=_handle_expressions(
+                unnamed_expressions,
+                named_expressions,
+                allow_multiple_input=False,
+                multiple_output=False,
+            ),
         )
 
 
@@ -324,8 +330,8 @@ class Conditional(Expression[Any]):
 def _handle_expressions(
     unnamed_expressions: tuple[Expression[Any], ...],
     named_expressions: dict[str, Expression[Any] | Any],
-    allow_multiple: bool = True,
-    consolidate_multiple: bool = False,
+    allow_multiple_input: bool = True,
+    multiple_output: bool = True,
 ) -> Expression[Any] | list[Expression[Any]]:
     expressions = list(unnamed_expressions) + [
         (e if isinstance(e, Expression) else Expression(e)).with_name(n)
@@ -333,12 +339,12 @@ def _handle_expressions(
     ]
     if len(expressions) == 0:
         raise Exception
-    elif len(expressions) == 1:
-        return get_exactly_one(expressions)
-    elif allow_multiple:
-        if consolidate_multiple:
+    elif len(expressions) > 1 and not allow_multiple_input:
+        raise Exception
+    if not multiple_output:
+        if len(expressions) > 1:
             return And(*expressions)
         else:
-            return expressions
+            return get_exactly_one(expressions)
     else:
-        raise Exception
+        return expressions
