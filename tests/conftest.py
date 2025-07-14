@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from src.schema import Base
 
 db_fixture = pytest_postgresql.factories.postgresql(
-    process_fixture_name="postgresql_proc", dbname="bodkin"
+    process_fixture_name="postgresql_proc", dbname="decision_tracker"
 )
 
 
