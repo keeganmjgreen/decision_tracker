@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, ClassVar, Literal, Self
+from typing import Any, ClassVar, Literal, Self, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine
@@ -18,21 +18,22 @@ def _value(x: Expression | Any) -> Any:
         return x
 
 
-class Expression:
-    value: Any
+class Expression[T]:
+    value: T
     _id: UUID
     _name: str | None
     _operator: ClassVar[str | None] = None
-    _operands: list[Expression]
+    _operands: list[Expression[T]]
 
     def __init__(
         self,
-        *unnamed_expressions: tuple[Expression[Any], ...],
-        **named_expressions: dict[str, Expression[Any] | Any],
+        *unnamed_expressions: Expression[T],
+        **named_expressions: Expression[T] | T,
     ) -> None:
-        self.value = _handle_expressions(
+        value = _handle_expressions(
             unnamed_expressions, named_expressions, allow_multiple=False
         )
+        self.value = cast(T, value)
         self._id = uuid4()
         self._name = None
         self._operands = []
@@ -42,47 +43,18 @@ class Expression:
         self._name = name
         return self
 
-    def and_(
-        self,
-        *unnamed_conditions: tuple[Expression[bool], ...],
-        **named_conditions: dict[str, Expression[bool] | bool],
-    ) -> And:
-        return And(
-            operands=[
-                *self._and_operands,
-                *_handle_expressions(unnamed_conditions, named_conditions).conditions,
-            ]
-        )
-
-    def or_(
-        self,
-        *unnamed_conditions: tuple[Expression[bool], ...],
-        **named_conditions: dict[str, Expression[bool] | bool],
-    ) -> Or:
-        return Or(
-            conditions=[
-                *self._or_operands,
-                _handle_expressions(unnamed_conditions, named_conditions).conditions,
-            ]
-        )
-
     def if_(
         self,
-        *unnamed_conditions: tuple[Expression[bool], ...],
-        **named_conditions: dict[str, Expression[bool] | bool],
+        *unnamed_conditions: Expression[bool],
+        **named_conditions: Expression[bool] | bool,
     ) -> IncompleteConditional:
+        condition = _handle_expressions(
+            unnamed_conditions, named_conditions, consolidate_multiple=True
+        )
         return IncompleteConditional(
             result_if_true=(self.value if type(self) is Expression else self),
-            condition=_handle_expressions(unnamed_conditions, named_conditions),
+            condition=cast(Expression[bool], condition),
         )
-
-    @property
-    def _and_operands(self) -> list[Expression[bool]]:
-        return [self]
-
-    @property
-    def _or_operands(self) -> list[Expression[bool]]:
-        return [self]
 
     @property
     def evaluated_expression(self) -> Expression:
@@ -91,7 +63,7 @@ class Expression:
     @property
     def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
         return EvaluatedExpressionRecord(
-            id=self._id,
+            id=self._id,  # type: ignore
             name=self._name,
             value=self.value,
             operator=self._operator,
@@ -111,18 +83,64 @@ class Expression:
             session.commit()
 
 
+class BooleanExpression(Expression[bool]):
+    def and_(
+        self,
+        *unnamed_conditions: Expression[bool],
+        **named_conditions: Expression[bool] | bool,
+    ) -> And:
+        return And(
+            *self._and_operands,
+            *cast(
+                list[Expression[bool]],
+                cast(
+                    Expression[bool],
+                    _handle_expressions(
+                        unnamed_conditions, named_conditions, consolidate_multiple=True
+                    ),
+                )._operands,
+            ),
+        )
+
+    def or_(
+        self,
+        *unnamed_conditions: Expression[bool],
+        **named_conditions: Expression[bool] | bool,
+    ) -> Or:
+        return Or(
+            *self._or_operands,
+            cast(
+                Expression[bool],
+                _handle_expressions(
+                    unnamed_conditions, named_conditions, consolidate_multiple=True
+                ),
+            ),
+        )
+
+    @property
+    def _and_operands(self) -> list[Expression[bool]]:
+        return [self]
+
+    @property
+    def _or_operands(self) -> list[Expression[bool]]:
+        return [self]
+
+
 class Not(Expression):
     _operator: ClassVar[Literal["not"]] = "not"
     _operand: Expression[bool]
 
     def __init__(
         self,
-        *unnamed_conditions: tuple[Expression[bool], ...],
-        **named_conditions: dict[str, Expression[bool] | bool],
+        *unnamed_conditions: Expression[bool],
+        **named_conditions: Expression[bool] | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
-        self._operand = _handle_expressions(unnamed_conditions, named_conditions)
+        operand = _handle_expressions(
+            unnamed_conditions, named_conditions, consolidate_multiple=True
+        )
+        self._operand = cast(Expression[bool], operand)
 
     @property
     def _operands(self) -> list[Expression[bool] | bool]:
@@ -154,21 +172,20 @@ class Not(Expression):
 
 class And(Expression):
     _operator: ClassVar[Literal["and"]] = "and"
-    _operands: list[Expression[bool] | bool]
+    _operands: list[Expression[bool]]
 
     def __init__(
         self,
-        *unnamed_conditions: tuple[Expression[bool], ...],
-        **named_conditions: dict[str, Expression[bool] | bool],
+        *unnamed_conditions: Expression[bool],
+        **named_conditions: Expression[bool] | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
-        self._operands = _handle_expressions(
-            unnamed_conditions, named_conditions, consolidate_multiple=False
-        )
+        operands = _handle_expressions(unnamed_conditions, named_conditions)
+        self._operands = cast(list[Expression[bool]], operands)
 
     @property
-    def and_operands(self) -> list[Expression[bool] | bool]:
+    def and_operands(self) -> list[Expression[bool]]:
         return self._operands
 
     @property
@@ -178,10 +195,10 @@ class And(Expression):
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            And([o.evaluated_expression for o in self._operands])
+            And(*[o.evaluated_expression for o in self._operands])
             if self.value
             else Or(
-                [Not(o) for o in self._operands if not o.value]
+                *[Not(o) for o in self._operands if not o.value]
             ).evaluated_expression
         )
 
@@ -203,21 +220,22 @@ class And(Expression):
 
 class Or(Expression):
     _operator: ClassVar[Literal["or"]] = "or"
-    _operands: list[Expression[bool] | bool]
+    _operands: list[Expression[bool]]
 
     def __init__(
         self,
-        *unnamed_conditions: tuple[Expression[bool], ...],
-        **named_conditions: dict[str, Expression[bool] | bool],
+        *unnamed_conditions: Expression[bool],
+        **named_conditions: Expression[bool] | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
-        self._operands = _handle_expressions(
+        operands = _handle_expressions(
             unnamed_conditions, named_conditions, consolidate_multiple=False
         )
+        self._operands = cast(list[Expression[bool]], operands)
 
     @property
-    def or_operands(self) -> list[Expression[bool] | bool]:
+    def or_operands(self) -> list[Expression[bool]]:
         return self._operands
 
     @property
@@ -227,9 +245,9 @@ class Or(Expression):
     @property
     def evaluated_expression(self) -> Expression[bool]:
         return (
-            Or([o.evaluated_expression for o in self._operands if o.value])
+            Or(*[o.evaluated_expression for o in self._operands if o.value])
             if self.value
-            else And([Not(o) for o in self._operands]).evaluated_expression
+            else And(*[Not(o) for o in self._operands]).evaluated_expression
         )
 
     @property
@@ -250,18 +268,18 @@ class Or(Expression):
 
 class IncompleteConditional:
     _result_if_true: Expression | Any
-    _condition: Expression[bool] | bool
+    _condition: Expression[bool]
 
     def __init__(
-        self, result_if_true: Expression | Any, condition: Expression[bool] | bool
+        self, result_if_true: Expression | Any, condition: Expression[bool]
     ) -> None:
         self._result_if_true = result_if_true
         self._condition = condition
 
     def else_(
         self,
-        *unnamed_expressions: tuple[Expression[bool], ...],
-        **named_expressions: dict[str, Expression[bool] | bool],
+        *unnamed_expressions: Expression[bool],
+        **named_expressions: Expression[bool] | bool,
     ) -> Conditional:
         return Conditional(
             self._result_if_true,
@@ -278,7 +296,7 @@ class Conditional(Expression):
     def __init__(
         self,
         result_if_true: Expression | Any,
-        condition: Expression[bool] | bool,
+        condition: Expression[bool],
         result_if_false: Expression | Any,
     ) -> None:
         self._name = None
@@ -307,11 +325,11 @@ class Conditional(Expression):
 
 
 def _handle_expressions(
-    unnamed_expressions: tuple[Expression[bool], ...],
-    named_expressions: dict[str, Expression[bool] | bool],
+    unnamed_expressions: tuple[Expression[Any], ...],
+    named_expressions: dict[str, Expression[Any] | Any],
     allow_multiple: bool = True,
-    consolidate_multiple: bool = True,
-) -> Expression[bool] | list[Expression[bool]]:
+    consolidate_multiple: bool = False,
+) -> Expression[Any] | list[Expression[Any]]:
     expressions = list(unnamed_expressions) + [
         (e if isinstance(e, Expression) else Expression(e)).with_name(n)
         for n, e in named_expressions.items()
@@ -322,7 +340,7 @@ def _handle_expressions(
         return get_exactly_one(expressions)
     elif allow_multiple:
         if consolidate_multiple:
-            return And(expressions)
+            return And(*expressions)
         else:
             return expressions
     else:
