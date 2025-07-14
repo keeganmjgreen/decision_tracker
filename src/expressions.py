@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, ClassVar, Literal, Self, cast
+from typing import Any, ClassVar, Self, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine
@@ -127,7 +127,7 @@ class BooleanExpression(Expression[bool]):
 
 
 class Not(Expression):
-    _operator: ClassVar[Literal["not"]] = "not"
+    _operator: ClassVar[str | None] = "not"
     _operand: Expression[bool]
 
     def __init__(
@@ -171,7 +171,7 @@ class Not(Expression):
 
 
 class And(Expression):
-    _operator: ClassVar[Literal["and"]] = "and"
+    _operator: ClassVar[str | None] = "and"
     _operands: list[Expression[bool]]
 
     def __init__(
@@ -219,7 +219,7 @@ class And(Expression):
 
 
 class Or(Expression):
-    _operator: ClassVar[Literal["or"]] = "or"
+    _operator: ClassVar[str | None] = "or"
     _operands: list[Expression[bool]]
 
     def __init__(
