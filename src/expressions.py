@@ -11,7 +11,7 @@ from schema import EvaluatedExpressionRecord
 from utils import get_exactly_one
 
 
-def _value(x: Expression | Any) -> Any:
+def _value(x: Expression[Any] | Any) -> Any:
     if isinstance(x, Expression):
         return x.value
     else:
@@ -57,7 +57,7 @@ class Expression[T]:
         )
 
     @property
-    def evaluated_expression(self) -> Expression:
+    def evaluated_expression(self) -> Expression[Any]:
         return self
 
     @property
@@ -123,7 +123,7 @@ class BooleanExpression(Expression[bool]):
         return [self]
 
 
-class Not(Expression):
+class Not(Expression[bool]):
     _operator: ClassVar[str | None] = "not"
     _operand: Expression[bool]
 
@@ -140,7 +140,7 @@ class Not(Expression):
         self._operand = cast(Expression[bool], operand)
 
     @property
-    def _operands(self) -> list[Expression[bool] | bool]:
+    def _operands(self) -> list[Expression[bool]]:
         return [self._operand]
 
     @property
@@ -167,7 +167,7 @@ class Not(Expression):
         )
 
 
-class And(Expression):
+class And(Expression[bool]):
     _operator: ClassVar[str | None] = "and"
     _operands: list[Expression[bool]]
 
@@ -215,7 +215,7 @@ class And(Expression):
         )
 
 
-class Or(Expression):
+class Or(Expression[bool]):
     _operator: ClassVar[str | None] = "or"
     _operands: list[Expression[bool]]
 
@@ -264,11 +264,11 @@ class Or(Expression):
 
 
 class IncompleteConditional:
-    _result_if_true: Expression | Any
+    _result_if_true: Expression[Any] | Any
     _condition: Expression[bool]
 
     def __init__(
-        self, result_if_true: Expression | Any, condition: Expression[bool]
+        self, result_if_true: Expression[Any] | Any, condition: Expression[bool]
     ) -> None:
         self._result_if_true = result_if_true
         self._condition = condition
@@ -285,16 +285,16 @@ class IncompleteConditional:
         )
 
 
-class Conditional(Expression):
-    _result_if_true: Expression | Any
+class Conditional(Expression[Any]):
+    _result_if_true: Expression[Any] | Any
     _condition: Expression[bool]
-    _result_if_false: Expression | Any
+    _result_if_false: Expression[Any] | Any
 
     def __init__(
         self,
-        result_if_true: Expression | Any,
+        result_if_true: Expression[Any] | Any,
         condition: Expression[bool],
-        result_if_false: Expression | Any,
+        result_if_false: Expression[Any] | Any,
     ) -> None:
         self._name = None
         self._result_if_true = result_if_true
