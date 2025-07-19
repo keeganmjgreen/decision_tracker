@@ -194,7 +194,7 @@ class And(BooleanExpression):
         )
 
     @property
-    def and_operands(self) -> list[BooleanExpression]:
+    def _and_operands(self) -> list[BooleanExpression]:
         return self._operands
 
     @property
@@ -244,7 +244,7 @@ class Or(BooleanExpression):
         )
 
     @property
-    def or_operands(self) -> list[BooleanExpression]:
+    def _or_operands(self) -> list[BooleanExpression]:
         return self._operands
 
     @property
