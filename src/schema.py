@@ -40,8 +40,8 @@ class EvaluatedExpressionRecord(Base):
     id: Mapped[UUID] = mapped_column(Uuid, default=None, primary_key=True)
     parent_id: Mapped[UUID | None] = mapped_column(Uuid, default=None)
     name: Mapped[str | None] = mapped_column(String, default=None)
-    value: Mapped[Any] = mapped_column(JSONB)
-    operator: Mapped[str | None] = mapped_column(String)
+    value: Mapped[Any] = mapped_column(JSONB)  # type: ignore
+    operator: Mapped[str | None] = mapped_column(String)  # type: ignore
 
     parent: Mapped[EvaluatedExpressionRecord | None] = relationship(
         default=NEVER_SET, back_populates="children", remote_side=[id], repr=False

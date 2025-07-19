@@ -1,6 +1,7 @@
 from uuid import UUID
 
 import sqlalchemy as sqla
+from sqlalchemy.orm import Session
 
 from expressions import And, Expression, Not
 from schema import EvaluatedExpressionRecord
@@ -13,7 +14,7 @@ def test_not_expression(db_engine: sqla.Engine) -> None:
     assert str(y) == "False because x := True"
     assert str(y.with_name("y")) == "y := False because x := True"
     y.to_db(db_engine)
-    with sqla.orm.Session(db_engine) as session:
+    with Session(db_engine) as session:
         records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
         record_1, record_2 = records
         assert isinstance(record_1.id, UUID)
