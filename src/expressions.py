@@ -94,7 +94,7 @@ class BooleanExpression(Expression[bool]):
         **named_conditions: BooleanExpression | bool,
     ) -> And:
         return And(
-            *self._and_operands,
+            self,
             *cast(
                 list[BooleanExpression],
                 _handle_expressions(
@@ -109,7 +109,7 @@ class BooleanExpression(Expression[bool]):
         **named_conditions: BooleanExpression | bool,
     ) -> Or:
         return Or(
-            *self._or_operands,
+            self,
             cast(
                 BooleanExpression,
                 _handle_expressions(
@@ -188,10 +188,15 @@ class And(BooleanExpression):
     ) -> None:
         self._id = uuid4()
         self._name = None
-        self._operands = cast(
+        self._operands = []
+        for o in cast(
             list[BooleanExpression],
             _handle_expressions(unnamed_conditions, named_conditions),
-        )
+        ):
+            if o._name is not None:
+                self._operands.append(o)
+            else:
+                self._operands.extend(o._and_operands)
 
     @property
     def _and_operands(self) -> list[BooleanExpression]:
@@ -238,10 +243,15 @@ class Or(BooleanExpression):
     ) -> None:
         self._id = uuid4()
         self._name = None
-        self._operands = cast(
+        self._operands = []
+        for o in cast(
             list[BooleanExpression],
             _handle_expressions(unnamed_conditions, named_conditions),
-        )
+        ):
+            if o._name is not None:
+                self._operands.append(o)
+            else:
+                self._operands.extend(o._or_operands)
 
     @property
     def _or_operands(self) -> list[BooleanExpression]:
