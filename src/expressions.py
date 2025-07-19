@@ -96,11 +96,11 @@ class BooleanExpression(Expression[bool]):
         return And(
             *self._and_operands,
             *cast(
-                BooleanExpression,
+                list[BooleanExpression],
                 _handle_expressions(
-                    unnamed_conditions, named_conditions, multiple_output=False
+                    unnamed_conditions, named_conditions, multiple_output=True
                 ),
-            )._operands,
+            ),
         )
 
     def or_(
