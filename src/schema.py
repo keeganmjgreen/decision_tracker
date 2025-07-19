@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
-from sqlalchemy import UUID, ForeignKeyConstraint, String, Uuid, inspect
+from sqlalchemy import ForeignKeyConstraint, String, Uuid, inspect
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
