@@ -262,7 +262,7 @@ class Or(BooleanExpression):
     @property
     def reason(self) -> str:
         return (
-            " or ".join(f"({o.reason})" for o in self._operands)
+            " or ".join(f"({o.reason})" for o in self._operands if o.value)
             if self.value
             else self.evaluated_expression.reason
         )
