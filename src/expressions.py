@@ -63,6 +63,13 @@ class Expression[T]:
         return self
 
     @property
+    def reason(self) -> str:
+        return (f"{self._name} := " if self._name else "") + f"{self.value}"
+
+    def __str__(self) -> str:
+        return self.reason
+
+    @property
     def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
         return EvaluatedExpressionRecord(
             id=self._id,  # type: ignore
@@ -71,13 +78,6 @@ class Expression[T]:
             operator=self._operator,
             children=[o.evaluated_expression_record for o in self._operands],
         )
-
-    @property
-    def reason(self) -> str:
-        return f"{self._name} := {self.value}"
-
-    def __str__(self) -> str:
-        return self.reason
 
     def to_db(self, db_engine: Engine) -> None:
         with Session(db_engine) as session:
