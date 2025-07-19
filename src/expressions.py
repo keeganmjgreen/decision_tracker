@@ -40,6 +40,16 @@ class Expression[T]:
         self._id = uuid4()
         self._operands = []
 
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Expression):
+            return (
+                self._name == other._name
+                and self._operator == other._operator
+                and self._operands == other._operands
+            )
+        else:
+            return False
+
     def with_name(self, name: str) -> Self:
         self = deepcopy(self)
         self._name = name
@@ -350,7 +360,7 @@ def _handle_expressions(
     multiple_output: bool = True,
 ) -> BooleanExpression | list[BooleanExpression]:
     expressions = list(unnamed_expressions) + [
-        (e if isinstance(e, BooleanExpression) else BooleanExpression(**{n: e}))
+        (e if isinstance(e, BooleanExpression) else BooleanExpression(e)).with_name(n)
         for n, e in named_expressions.items()
     ]
     if len(expressions) == 0:

@@ -3,8 +3,31 @@ from uuid import UUID
 import sqlalchemy as sqla
 from sqlalchemy.orm import Session
 
-from expressions import And, Expression, Not
+from expressions import And, BooleanExpression, Expression, Not, Or
 from schema import EvaluatedExpressionRecord
+
+
+class TestBooleanExpression:
+    def test_boolean_expression(self) -> None:
+        y = BooleanExpression(True)
+        assert y.value is True
+        assert str(y) == "True"
+        assert str(BooleanExpression(y=True)) == "y := True"
+
+    def test_and_ing(self) -> None:
+        assert BooleanExpression(a=True).and_(b=True, c=True) == And(
+            a=True, b=True, c=True
+        )
+        assert And(a=True, b=True).and_(c=True, d=True) == And(
+            a=True, b=True, c=True, d=True
+        )
+
+    def test_or_ing(self) -> None:
+        assert BooleanExpression(a=True).or_(b=True) == Or(a=True, b=True)
+        assert Or(a=True, b=True).or_(c=True) == Or(a=True, b=True, c=True)
+        assert BooleanExpression(a=True).or_(b=True, c=True) == Or(
+            BooleanExpression(a=True), And(b=True, c=True)
+        )
 
 
 class TestNotOperator:
@@ -33,6 +56,42 @@ class TestAndOperator:
         assert y.value is False
         assert str(y) == "False because (b := False)"
         assert str(y.with_name("y")) == "y := False because (b := False)"
+
+    def test_simplifying_nested_and_operators(self) -> None:
+        assert And(And(a1=True, a2=True), And(b1=True, b2=True)) == And(
+            a1=True, a2=True, b1=True, b2=True
+        )
+        # Not when named:
+        assert And(
+            a=And(a1=True, a2=True),
+            b=And(b1=True, b2=True),
+        ) != And(a1=True, a2=True, b1=True, b2=True)
+
+
+class TestOrOperator:
+    def test_when_true(self) -> None:
+        y = Or(a=True, b=False)
+        assert y.value is True
+        assert str(y) == "True because (a := True)"
+        assert str(y.with_name("y")) == "y := True because (a := True)"
+
+    def test_when_false(self) -> None:
+        y = Or(a=False, b=False)
+        assert y.value is False
+        assert str(y) == "False because (a := False) and (b := False)"
+        assert (
+            str(y.with_name("y")) == "y := False because (a := False) and (b := False)"
+        )
+
+    def test_simplifying_nested_and_operators(self) -> None:
+        assert Or(Or(a1=True, a2=True), Or(b1=True, b2=True)) == Or(
+            a1=True, a2=True, b1=True, b2=True
+        )
+        # Not when named:
+        assert Or(
+            a=Or(a1=True, a2=True),
+            b=Or(b1=True, b2=True),
+        ) != Or(a1=True, a2=True, b1=True, b2=True)
 
 
 class TestTernaryOperator:
