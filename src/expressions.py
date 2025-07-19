@@ -25,20 +25,19 @@ class Expression[T]:
     _operator: ClassVar[str | None] = None
     _operands: list[Expression[T]]
 
-    def __init__(
-        self,
-        *unnamed_expressions: Expression[T],
-        **named_expressions: Expression[T] | T,
-    ) -> None:
-        value = _handle_expressions(
-            unnamed_expressions,
-            named_expressions,
-            allow_multiple_input=False,
-            multiple_output=False,
-        )
-        self.value = cast(T, value)
+    def __init__(self, *unnamed_values: T, **named_values: T) -> None:
+        if len(unnamed_values) > 0:
+            if len(named_values) > 0:
+                raise ValueError(
+                    "Either `unnamed_values` or `named_values` must contain a value, "
+                    "not both."
+                )
+            self.value = get_exactly_one(unnamed_values)
+            self._name = None
+        else:
+            self.value = get_exactly_one(named_values.values())
+            self._name = get_exactly_one(named_values.keys())
         self._id = uuid4()
-        self._name = None
         self._operands = []
 
     def with_name(self, name: str) -> Self:
@@ -48,15 +47,15 @@ class Expression[T]:
 
     def if_(
         self,
-        *unnamed_conditions: Expression[bool],
-        **named_conditions: Expression[bool] | bool,
+        *unnamed_conditions: BooleanExpression,
+        **named_conditions: BooleanExpression | bool,
     ) -> IncompleteConditional:
         condition = _handle_expressions(
             unnamed_conditions, named_conditions, multiple_output=False
         )
         return IncompleteConditional(
             result_if_true=(self.value if type(self) is Expression else self),
-            condition=cast(Expression[bool], condition),
+            condition=cast(BooleanExpression, condition),
         )
 
     @property
@@ -87,15 +86,17 @@ class Expression[T]:
 
 
 class BooleanExpression(Expression[bool]):
+    _operands: list[BooleanExpression]
+
     def and_(
         self,
-        *unnamed_conditions: Expression[bool],
-        **named_conditions: Expression[bool] | bool,
+        *unnamed_conditions: BooleanExpression,
+        **named_conditions: BooleanExpression | bool,
     ) -> And:
         return And(
             *self._and_operands,
             *cast(
-                Expression[bool],
+                BooleanExpression,
                 _handle_expressions(
                     unnamed_conditions, named_conditions, multiple_output=False
                 ),
@@ -104,13 +105,13 @@ class BooleanExpression(Expression[bool]):
 
     def or_(
         self,
-        *unnamed_conditions: Expression[bool],
-        **named_conditions: Expression[bool] | bool,
+        *unnamed_conditions: BooleanExpression,
+        **named_conditions: BooleanExpression | bool,
     ) -> Or:
         return Or(
             *self._or_operands,
             cast(
-                Expression[bool],
+                BooleanExpression,
                 _handle_expressions(
                     unnamed_conditions, named_conditions, multiple_output=False
                 ),
@@ -118,32 +119,38 @@ class BooleanExpression(Expression[bool]):
         )
 
     @property
-    def _and_operands(self) -> list[Expression[bool]]:
+    def _and_operands(self) -> list[BooleanExpression]:
         return [self]
 
     @property
-    def _or_operands(self) -> list[Expression[bool]]:
+    def _or_operands(self) -> list[BooleanExpression]:
         return [self]
 
+    @property
+    def evaluated_expression(self) -> BooleanExpression:
+        return self
 
-class Not(Expression[bool]):
+
+class Not(BooleanExpression):
     _operator: ClassVar[str | None] = "not"
-    _operand: Expression[bool]
+    _operand: BooleanExpression
 
     def __init__(
         self,
-        *unnamed_conditions: Expression[bool],
-        **named_conditions: Expression[bool] | bool,
+        *unnamed_conditions: BooleanExpression,
+        **named_conditions: BooleanExpression | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
-        operand = _handle_expressions(
-            unnamed_conditions, named_conditions, multiple_output=False
+        self._operand = cast(
+            BooleanExpression,
+            _handle_expressions(
+                unnamed_conditions, named_conditions, multiple_output=False
+            ),
         )
-        self._operand = cast(Expression[bool], operand)
 
     @property
-    def _operands(self) -> list[Expression[bool]]:
+    def _operands(self) -> list[BooleanExpression]:
         return [self._operand]
 
     @property
@@ -151,7 +158,7 @@ class Not(Expression[bool]):
         return not self._operand.value
 
     @property
-    def evaluated_expression(self) -> Expression[bool]:
+    def evaluated_expression(self) -> BooleanExpression:
         return (
             Not(self._operand.evaluated_expression)
             if self.value
@@ -170,22 +177,24 @@ class Not(Expression[bool]):
         )
 
 
-class And(Expression[bool]):
+class And(BooleanExpression):
     _operator: ClassVar[str | None] = "and"
-    _operands: list[Expression[bool]]
+    _operands: list[BooleanExpression]
 
     def __init__(
         self,
-        *unnamed_conditions: Expression[bool],
-        **named_conditions: Expression[bool] | bool,
+        *unnamed_conditions: BooleanExpression,
+        **named_conditions: BooleanExpression | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
-        operands = _handle_expressions(unnamed_conditions, named_conditions)
-        self._operands = cast(list[Expression[bool]], operands)
+        self._operands = cast(
+            list[BooleanExpression],
+            _handle_expressions(unnamed_conditions, named_conditions),
+        )
 
     @property
-    def and_operands(self) -> list[Expression[bool]]:
+    def and_operands(self) -> list[BooleanExpression]:
         return self._operands
 
     @property
@@ -193,7 +202,7 @@ class And(Expression[bool]):
         return all(o.value for o in self._operands)
 
     @property
-    def evaluated_expression(self) -> Expression[bool]:
+    def evaluated_expression(self) -> BooleanExpression:
         return (
             And(*[o.evaluated_expression for o in self._operands])
             if self.value
@@ -218,22 +227,24 @@ class And(Expression[bool]):
         )
 
 
-class Or(Expression[bool]):
+class Or(BooleanExpression):
     _operator: ClassVar[str | None] = "or"
-    _operands: list[Expression[bool]]
+    _operands: list[BooleanExpression]
 
     def __init__(
         self,
-        *unnamed_conditions: Expression[bool],
-        **named_conditions: Expression[bool] | bool,
+        *unnamed_conditions: BooleanExpression,
+        **named_conditions: BooleanExpression | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
-        operands = _handle_expressions(unnamed_conditions, named_conditions)
-        self._operands = cast(list[Expression[bool]], operands)
+        self._operands = cast(
+            list[BooleanExpression],
+            _handle_expressions(unnamed_conditions, named_conditions),
+        )
 
     @property
-    def or_operands(self) -> list[Expression[bool]]:
+    def or_operands(self) -> list[BooleanExpression]:
         return self._operands
 
     @property
@@ -241,7 +252,7 @@ class Or(Expression[bool]):
         return any(o.value for o in self._operands)
 
     @property
-    def evaluated_expression(self) -> Expression[bool]:
+    def evaluated_expression(self) -> BooleanExpression:
         return (
             Or(*[o.evaluated_expression for o in self._operands if o.value])
             if self.value
@@ -266,40 +277,35 @@ class Or(Expression[bool]):
 
 class IncompleteConditional:
     _result_if_true: Expression[Any] | Any
-    _condition: Expression[bool]
+    _condition: BooleanExpression
 
     def __init__(
-        self, result_if_true: Expression[Any] | Any, condition: Expression[bool]
+        self, result_if_true: Expression[Any] | Any, condition: BooleanExpression
     ) -> None:
         self._result_if_true = result_if_true
         self._condition = condition
 
     def else_(
         self,
-        *unnamed_expressions: Expression[bool],
-        **named_expressions: Expression[bool] | bool,
+        *unnamed_values: Any,
+        **named_values: Expression[Any] | Any,
     ) -> Conditional:
         return Conditional(
             self._result_if_true,
             self._condition,
-            result_if_false=_handle_expressions(
-                unnamed_expressions,
-                named_expressions,
-                allow_multiple_input=False,
-                multiple_output=False,
-            ),
+            result_if_false=Expression(*unnamed_values, **named_values),
         )
 
 
 class Conditional(Expression[Any]):
     _result_if_true: Expression[Any] | Any
-    _condition: Expression[bool]
+    _condition: BooleanExpression
     _result_if_false: Expression[Any] | Any
 
     def __init__(
         self,
         result_if_true: Expression[Any] | Any,
-        condition: Expression[bool],
+        condition: BooleanExpression,
         result_if_false: Expression[Any] | Any,
     ) -> None:
         self._name = None
@@ -316,7 +322,7 @@ class Conditional(Expression[Any]):
         )
 
     @property
-    def evaluated_expression(self) -> Expression[bool]:
+    def evaluated_expression(self) -> BooleanExpression:
         return self._condition.evaluated_expression
 
     def __str__(self):
@@ -328,13 +334,13 @@ class Conditional(Expression[Any]):
 
 
 def _handle_expressions(
-    unnamed_expressions: tuple[Expression[Any], ...],
-    named_expressions: dict[str, Expression[Any] | Any],
+    unnamed_expressions: tuple[BooleanExpression, ...],
+    named_expressions: dict[str, BooleanExpression | bool],
     allow_multiple_input: bool = True,
     multiple_output: bool = True,
-) -> Expression[Any] | list[Expression[Any]]:
+) -> BooleanExpression | list[BooleanExpression]:
     expressions = list(unnamed_expressions) + [
-        (e if isinstance(e, Expression) else Expression(e)).with_name(n)
+        (e if isinstance(e, BooleanExpression) else BooleanExpression(**{n: e}))
         for n, e in named_expressions.items()
     ]
     if len(expressions) == 0:
