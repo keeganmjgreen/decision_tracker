@@ -129,14 +129,6 @@ class BooleanExpression(Expression[bool]):
         )
 
     @property
-    def _and_operands(self) -> list[BooleanExpression]:
-        return [self]
-
-    @property
-    def _or_operands(self) -> list[BooleanExpression]:
-        return [self]
-
-    @property
     def evaluated_expression(self) -> BooleanExpression:
         return self
 
@@ -203,14 +195,10 @@ class And(BooleanExpression):
             list[BooleanExpression],
             _handle_expressions(unnamed_conditions, named_conditions),
         ):
-            if o._name is not None:
+            if o._name is not None or not isinstance(o, And):
                 self._operands.append(o)
             else:
-                self._operands.extend(o._and_operands)
-
-    @property
-    def _and_operands(self) -> list[BooleanExpression]:
-        return self._operands
+                self._operands.extend(o._operands)
 
     @property
     def value(self) -> bool:
@@ -258,14 +246,10 @@ class Or(BooleanExpression):
             list[BooleanExpression],
             _handle_expressions(unnamed_conditions, named_conditions),
         ):
-            if o._name is not None:
+            if o._name is not None or not isinstance(o, Or):
                 self._operands.append(o)
             else:
-                self._operands.extend(o._or_operands)
-
-    @property
-    def _or_operands(self) -> list[BooleanExpression]:
-        return self._operands
+                self._operands.extend(o._operands)
 
     @property
     def value(self) -> bool:
