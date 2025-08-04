@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import abc
 import math
 from copy import deepcopy
-from typing import Any, ClassVar, Self, cast
+from typing import Any, ClassVar, Self, cast, override
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine
@@ -12,70 +13,44 @@ from schema import EvaluatedExpressionRecord
 from utils import get_exactly_one
 
 # ======================================================================================
-# Generic Expression
+# Base expressions
 
 
-class Expression[T]:
-    value: T
+class BaseExpression[T](abc.ABC):
     _id: UUID
     _name: str | None
-    _operator: ClassVar[str | None] = None
-    _operands: list[Expression[T]]
+    _operator: ClassVar[str | None]
+    _short_operator: ClassVar[str | None]
 
-    def __init__(self, *unnamed_values: T, **named_values: T) -> None:
-        if len(unnamed_values) > 0:
-            if len(named_values) > 0:
-                raise ValueError(
-                    "Either `unnamed_values` or `named_values` must contain a value, "
-                    "not both."
-                )
-            self.value = get_exactly_one(unnamed_values)
-            self._name = None
-        else:
-            self.value = get_exactly_one(named_values.values())
-            self._name = get_exactly_one(named_values.keys())
+    def __init__(self) -> None:
         self._id = uuid4()
-        self._operands = []
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, Expression):
-            return (
-                self._name == other._name
-                and self._operator == other._operator
-                and self._operands == other._operands
-                and self.value == other.value
-            )
-        else:
-            return False
-
-    def with_name(self, name: str) -> Self:
-        self = deepcopy(self)
-        self._name = name
-        return self
-
-    def if_(
-        self,
-        *unnamed_expressions: BooleanExpression,
-        **named_expressions: BooleanExpression | bool,
-    ) -> IncompleteConditional:
-        condition = _handle_boolean_expressions(
-            unnamed_expressions, named_expressions, multiple_output=False
-        )
-        return IncompleteConditional(
-            result_if_true=(self.value if type(self) is Expression else self),
-            condition=cast(BooleanExpression, condition),
-        )
+        self._name = None
 
     @property
-    def evaluated_expression(self) -> Expression[Any]:
-        return self
+    @abc.abstractmethod
+    def operands(self) -> list[BaseExpression[Any]]:
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def value(self) -> T:
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def evaluated_expression(self) -> BaseExpression[T]:
+        raise NotImplementedError
 
     @property
     def reason(self) -> str:
-        return (f"{self._name} := " if self._name else "") + f"{self.value}"
+        return f" {self._short_operator} ".join(f"({o.reason})" for o in self.operands)
 
     def __str__(self) -> str:
-        return self.reason
+        return (
+            (f"{self._name} := " if self._name else "")
+            + f"{self.value} because "
+            + self.reason
+        )
 
     @property
     def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
@@ -84,7 +59,7 @@ class Expression[T]:
             name=self._name,
             value=self.value,
             operator=self._operator,
-            children=[o.evaluated_expression_record for o in self._operands],
+            children=[o.evaluated_expression_record for o in self.operands],
         )
 
     def to_db(self, db_engine: Engine) -> None:
@@ -92,69 +67,157 @@ class Expression[T]:
             session.add(self.evaluated_expression_record)  # Also adds children.
             session.commit()
 
+    def with_name(self, name: str) -> Self:
+        self = deepcopy(self)
+        self._name = name
+        return self
+
+    def if_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> IncompleteConditional[T]:
+        condition = _one_boolean_expression_from(unnamed_expressions, named_expressions)
+        return IncompleteConditional(
+            result_if_true=_value_of(self),
+            condition=condition,
+        )
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, BaseExpression):
+            other = cast(BaseExpression[T], other)
+            return (
+                self._name == other._name
+                and self._operator == other._operator
+                and self.operands == other.operands
+                and self.value == other.value
+            )
+        else:
+            return False
+
+
+class BaseLiteralExpression[T](BaseExpression[T]):
+    _literal_value: T
+    _operator: ClassVar[str | None] = None
+    _short_operator: ClassVar[str | None] = _operator
+
+    def __init__(self, *unnamed_values: T, **named_values: T) -> None:
+        super().__init__()
+        if len(unnamed_values) > 0:
+            if len(named_values) > 0:
+                raise ValueError(
+                    "Either `unnamed_values` or `named_values` must contain a value, "
+                    "not both."
+                )
+            self._literal_value = get_exactly_one(unnamed_values)
+        else:
+            self._literal_value = get_exactly_one(named_values.values())
+            self._name = get_exactly_one(named_values.keys())
+
+    @property
+    def value(self) -> T:
+        return self._literal_value
+
+    @property
+    def operands(self) -> list[BaseExpression[T]]:
+        return []
+
+    @property
+    def evaluated_expression(self) -> BaseExpression[T]:
+        return self
+
+    @property
+    @override
+    def reason(self) -> str:
+        return (f"{self._name} := " if self._name else "") + f"{self.value}"
+
+    @override
+    def __str__(self) -> str:
+        return self.reason
+
+
+def _one_expression_from[T](
+    unnamed_expressions: tuple[BaseExpression[T], ...],
+    named_expressions: dict[str, BaseExpression[T] | T],
+) -> BaseExpression[T]:
+    return get_exactly_one(_expressions_from(unnamed_expressions, named_expressions))
+
+
+def _expressions_from[T](
+    unnamed_expressions: tuple[BaseExpression[T], ...],
+    named_expressions: dict[str, BaseExpression[T] | T],
+) -> list[BaseExpression[T]]:
+    expressions = list(unnamed_expressions) + [
+        (e if isinstance(e, BaseExpression) else BaseLiteralExpression[T](e)).with_name(
+            n
+        )
+        for n, e in named_expressions.items()
+    ]
+    if len(expressions) == 0:
+        raise Exception
+    return expressions
+
+
+def _value_of[T](x: BaseExpression[T] | T) -> T:
+    if isinstance(x, BaseExpression):
+        x = cast(BaseExpression[T], x)
+        return x.value
+    else:
+        return x
+
 
 # ======================================================================================
-# Boolean Expression
+# Boolean expressions
 
 
-class BooleanExpression(Expression[bool]):
-    _operands: list[BooleanExpression]
+class BooleanBaseExpression(BaseExpression[bool]):
+    @property
+    @override
+    def reason(self) -> str:
+        return (
+            f" {self._short_operator} ".join(f"({o.reason})" for o in self.operands)
+            if self.value
+            else self.evaluated_expression.reason
+        )
 
     def and_(
         self,
-        *unnamed_expressions: BooleanExpression,
-        **named_expressions: BooleanExpression | bool,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
     ) -> And:
-        return And(
-            self,
-            *cast(
-                list[BooleanExpression],
-                _handle_boolean_expressions(
-                    unnamed_expressions, named_expressions, multiple_output=True
-                ),
-            ),
-        )
+        return And(self, *_expressions_from(unnamed_expressions, named_expressions))
 
     def or_(
         self,
-        *unnamed_expressions: BooleanExpression,
-        **named_expressions: BooleanExpression | bool,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
     ) -> Or:
         return Or(
-            self,
-            cast(
-                BooleanExpression,
-                _handle_boolean_expressions(
-                    unnamed_expressions, named_expressions, multiple_output=False
-                ),
-            ),
+            self, _one_boolean_expression_from(unnamed_expressions, named_expressions)
         )
 
-    @property
-    def evaluated_expression(self) -> BooleanExpression:
-        return self
+
+class BooleanLiteralExpression(BaseLiteralExpression[bool], BooleanBaseExpression):
+    pass
 
 
-class Not(BooleanExpression):
+class Not(BooleanBaseExpression):
     _operator: ClassVar[str | None] = "not"
-    _operand: BooleanExpression
+    _short_operator: ClassVar[str | None] = _operator
+    _operand: BaseExpression[bool]
 
     def __init__(
         self,
-        *unnamed_expressions: BooleanExpression,
-        **named_expressions: BooleanExpression | bool,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
     ) -> None:
-        self._id = uuid4()
-        self._name = None
-        self._operand = cast(
-            BooleanExpression,
-            _handle_boolean_expressions(
-                unnamed_expressions, named_expressions, multiple_output=False
-            ),
+        super().__init__()
+        self._operand = _one_boolean_expression_from(
+            unnamed_expressions, named_expressions
         )
 
     @property
-    def _operands(self) -> list[BooleanExpression]:
+    def operands(self) -> list[BaseExpression[bool]]:
         return [self._operand]
 
     @property
@@ -162,7 +225,7 @@ class Not(BooleanExpression):
         return not self._operand.value
 
     @property
-    def evaluated_expression(self) -> BooleanExpression:
+    def evaluated_expression(self) -> BaseExpression[bool]:
         return (
             Not(self._operand.evaluated_expression)
             if self.value
@@ -173,41 +236,35 @@ class Not(BooleanExpression):
     def reason(self) -> str:
         return self._operand.reason
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
 
-
-class And(BooleanExpression):
+class And(BooleanBaseExpression):
     _operator: ClassVar[str | None] = "and"
-    _operands: list[BooleanExpression]
+    _short_operator: ClassVar[str | None] = _operator
+    _operands: list[BaseExpression[bool]]
 
     def __init__(
         self,
-        *unnamed_expressions: BooleanExpression,
-        **named_expressions: BooleanExpression | bool,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
     ) -> None:
-        self._id = uuid4()
-        self._name = None
+        super().__init__()
         self._operands = []
-        for o in cast(
-            list[BooleanExpression],
-            _handle_boolean_expressions(unnamed_expressions, named_expressions),
-        ):
+        for o in _expressions_from(unnamed_expressions, named_expressions):
             if o._name is not None or not isinstance(o, And):
                 self._operands.append(o)
             else:
                 self._operands.extend(o._operands)
 
     @property
+    def operands(self) -> list[BaseExpression[bool]]:
+        return self._operands
+
+    @property
     def value(self) -> bool:
         return all(o.value for o in self._operands)
 
     @property
-    def evaluated_expression(self) -> BooleanExpression:
+    def evaluated_expression(self) -> BaseExpression[bool]:
         return (
             And(*[o.evaluated_expression for o in self._operands])
             if self.value
@@ -216,49 +273,35 @@ class And(BooleanExpression):
             ).evaluated_expression
         )
 
-    @property
-    def reason(self) -> str:
-        return (
-            " and ".join(f"({o.reason})" for o in self._operands)
-            if self.value
-            else self.evaluated_expression.reason
-        )
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
-
-
-class Or(BooleanExpression):
+class Or(BooleanBaseExpression):
     _operator: ClassVar[str | None] = "or"
-    _operands: list[BooleanExpression]
+    _short_operator: ClassVar[str | None] = _operator
+    _operands: list[BaseExpression[bool]]
 
     def __init__(
         self,
-        *unnamed_expressions: BooleanExpression,
-        **named_expressions: BooleanExpression | bool,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
     ) -> None:
-        self._id = uuid4()
-        self._name = None
+        super().__init__()
         self._operands = []
-        for o in cast(
-            list[BooleanExpression],
-            _handle_boolean_expressions(unnamed_expressions, named_expressions),
-        ):
+        for o in _expressions_from(unnamed_expressions, named_expressions):
             if o._name is not None or not isinstance(o, Or):
                 self._operands.append(o)
             else:
                 self._operands.extend(o._operands)
 
     @property
+    def operands(self) -> list[BaseExpression[bool]]:
+        return self._operands
+
+    @property
     def value(self) -> bool:
         return any(o.value for o in self._operands)
 
     @property
-    def evaluated_expression(self) -> BooleanExpression:
+    def evaluated_expression(self) -> BaseExpression[bool]:
         return (
             Or(*[o.evaluated_expression for o in self._operands if o.value])
             if self.value
@@ -273,98 +316,103 @@ class Or(BooleanExpression):
             else self.evaluated_expression.reason
         )
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
 
-
-def _handle_boolean_expressions(
-    unnamed_expressions: tuple[BooleanExpression, ...],
-    named_expressions: dict[str, BooleanExpression | bool],
+def _one_boolean_expression_from(
+    unnamed_expressions: tuple[BaseExpression[bool], ...],
+    named_expressions: dict[str, BaseExpression[bool] | bool],
     allow_multiple_input: bool = True,
-    multiple_output: bool = True,
-) -> BooleanExpression | list[BooleanExpression]:
-    expressions = list(unnamed_expressions) + [
-        (e if isinstance(e, BooleanExpression) else BooleanExpression(e)).with_name(n)
-        for n, e in named_expressions.items()
-    ]
-    if len(expressions) == 0:
+) -> BaseExpression[bool]:
+    expressions = _expressions_from(unnamed_expressions, named_expressions)
+    if len(expressions) > 1 and not allow_multiple_input:
         raise Exception
-    elif len(expressions) > 1 and not allow_multiple_input:
-        raise Exception
-    if not multiple_output:
-        if len(expressions) > 1:
-            return And(*expressions)
-        else:
-            return get_exactly_one(expressions)
+    if len(expressions) > 1:
+        return And(*expressions)
     else:
-        return expressions
+        return get_exactly_one(expressions)
 
 
 # ======================================================================================
-# Conditional Expression
+# Conditional expressions
 
 
-class IncompleteConditional:
-    _result_if_true: Expression[Any] | Any
-    _condition: BooleanExpression
+class IncompleteConditional[RT]:
+    _result_if_true: BaseExpression[RT] | RT
+    _condition: BaseExpression[bool]
 
     def __init__(
-        self, result_if_true: Expression[Any] | Any, condition: BooleanExpression
+        self, result_if_true: BaseExpression[RT] | RT, condition: BaseExpression[bool]
     ) -> None:
         self._result_if_true = result_if_true
         self._condition = condition
 
     def else_(
         self,
-        *unnamed_values: Any,
-        **named_values: Expression[Any] | Any,
-    ) -> Conditional:
+        *unnamed_values: BaseExpression[RT] | RT,
+        **named_values: BaseExpression[RT] | RT,
+    ) -> Conditional[RT]:
+        unnamed_value_list: list[BaseExpression[RT]] = [
+            (
+                unnamed_value
+                if isinstance(unnamed_value, BaseExpression)
+                else BaseLiteralExpression[RT](unnamed_value)
+            )
+            for unnamed_value in unnamed_values
+        ]
         return Conditional(
             self._result_if_true,
             self._condition,
-            result_if_false=Expression(*unnamed_values, **named_values),
+            result_if_false=_one_expression_from(
+                tuple(unnamed_value_list), named_values
+            ),
         )
 
 
-class Conditional(Expression[Any]):
-    _result_if_true: Expression[Any] | Any
-    _condition: BooleanExpression
-    _result_if_false: Expression[Any] | Any
+class Conditional[RT](BaseExpression[RT]):
+    _result_if_true: BaseExpression[RT] | RT
+    _condition: BaseExpression[bool]
+    _result_if_false: BaseExpression[RT] | RT
 
     def __init__(
         self,
-        result_if_true: Expression[Any] | Any,
-        condition: BooleanExpression,
-        result_if_false: Expression[Any] | Any,
+        result_if_true: BaseExpression[RT] | RT,
+        condition: BaseExpression[bool] | bool,
+        result_if_false: BaseExpression[RT] | RT,
     ) -> None:
-        self._name = None
+        super().__init__()
         self._result_if_true = result_if_true
-        self._condition = condition
+        self._condition = (
+            condition
+            if isinstance(condition, BaseExpression)
+            else BaseLiteralExpression[bool](condition)
+        )
         self._result_if_false = result_if_false
 
     @property
-    def value(self) -> bool:
-        return (
-            self._value_of(self._result_if_true)
-            if self._value_of(self._condition)
-            else self._value_of(self._result_if_false)
-        )
-
-    @staticmethod
-    def _value_of[T](x: Expression[T] | T) -> T:
-        if isinstance(x, Expression):
-            return x.value
-        else:
-            return x
+    def operands(self) -> list[BaseExpression[bool]]:
+        return self.evaluated_expression.operands
 
     @property
-    def evaluated_expression(self) -> BooleanExpression:
+    def value(self) -> RT:
+        return (
+            _value_of(self._result_if_true)
+            if _value_of(self._condition)
+            else _value_of(self._result_if_false)
+        )
+
+    @property
+    def evaluated_expression(self) -> BaseExpression[bool]:
         return self._condition.evaluated_expression
 
+    @property
+    @override
+    def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
+        raise Exception
+
+    @property
+    def reason(self) -> str:
+        return self.evaluated_expression.reason
+
+    @override
     def __str__(self):
         return (
             (f"{self._name} := " if self._name else "")
@@ -374,139 +422,131 @@ class Conditional(Expression[Any]):
 
 
 # ======================================================================================
-# Numeric Expression
+# Numeric expressions
 
 
 N = int | float
 
 
-class NumericExpression(Expression[N]):
-    _operands: list[NumericExpression]
-
+class NumericBaseExpression(BaseExpression[N]):
     def times(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> Product:
-        return Product(
-            self, *_numeric_expressions_from(unnamed_expressions, named_expressions)
-        )
+        return Product(self, *_expressions_from(unnamed_expressions, named_expressions))
 
     def divided_by(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> Quotient:
         return Quotient(
             dividend=self,
-            divisor=_one_numeric_expression_from(
-                unnamed_expressions, named_expressions
-            ),
+            divisor=_one_expression_from(unnamed_expressions, named_expressions),
         )
 
     def plus(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> Sum:
-        return Sum(
-            self, *_numeric_expressions_from(unnamed_expressions, named_expressions)
-        )
+        return Sum(self, *_expressions_from(unnamed_expressions, named_expressions))
 
     def minus(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> Difference:
         return Difference(
             minuend=self,
-            subtrahend=_one_numeric_expression_from(
-                unnamed_expressions, named_expressions
-            ),
+            subtrahend=_one_expression_from(unnamed_expressions, named_expressions),
         )
 
     def eq(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> EqualToComparison:
         return EqualToComparison(
-            lhs=self,
-            rhs=_one_numeric_expression_from(unnamed_expressions, named_expressions),
+            lhs=self, rhs=_one_expression_from(unnamed_expressions, named_expressions)
         )
 
     def neq(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> NotEqualToComparison:
         return NotEqualToComparison(
-            lhs=self,
-            rhs=_one_numeric_expression_from(unnamed_expressions, named_expressions),
+            lhs=self, rhs=_one_expression_from(unnamed_expressions, named_expressions)
         )
 
     def gt(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> GreaterThanComparison:
         return GreaterThanComparison(
-            lhs=self,
-            rhs=_one_numeric_expression_from(unnamed_expressions, named_expressions),
+            lhs=self, rhs=_one_expression_from(unnamed_expressions, named_expressions)
         )
 
     def gte(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> GreaterThanOrEqualToComparison:
         return GreaterThanOrEqualToComparison(
-            lhs=self,
-            rhs=_one_numeric_expression_from(unnamed_expressions, named_expressions),
+            lhs=self, rhs=_one_expression_from(unnamed_expressions, named_expressions)
         )
 
     def lt(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> LessThanComparison:
         return LessThanComparison(
-            lhs=self,
-            rhs=_one_numeric_expression_from(unnamed_expressions, named_expressions),
+            lhs=self, rhs=_one_expression_from(unnamed_expressions, named_expressions)
         )
 
     def lte(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> LessThanOrEqualToComparison:
         return LessThanOrEqualToComparison(
-            lhs=self,
-            rhs=_one_numeric_expression_from(unnamed_expressions, named_expressions),
+            lhs=self, rhs=_one_expression_from(unnamed_expressions, named_expressions)
         )
 
     @property
-    def evaluated_expression(self) -> NumericExpression:
+    def evaluated_expression(self) -> BaseExpression[N]:
         return self
 
 
-class Product(NumericExpression):
+class NumericLiteralExpression(BaseLiteralExpression[N], NumericBaseExpression):
+    pass
+
+
+class Product(NumericBaseExpression):
     _operator: ClassVar[str | None] = "times"
-    _operands: list[NumericExpression]
+    _short_operator: ClassVar[str | None] = "*"
+    _operands: list[BaseExpression[N]]
 
     def __init__(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> None:
-        self._id = uuid4()
-        self._name = None
+        super().__init__()
         self._operands = []
-        for o in _numeric_expressions_from(unnamed_expressions, named_expressions):
+        for o in _expressions_from(unnamed_expressions, named_expressions):
             if o._name is not None or not isinstance(o, Product):
                 self._operands.append(o)
             else:
                 self._operands.extend(o._operands)
+
+    @property
+    def operands(self) -> list[BaseExpression[N]]:
+        return self._operands
 
     @property
     def value(self) -> N:
@@ -516,137 +556,93 @@ class Product(NumericExpression):
     def reason(self) -> str:
         return " * ".join(f"({o.reason})" for o in self._operands)
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
 
-
-class Quotient(NumericExpression):
+class Quotient(NumericBaseExpression):
     _operator: ClassVar[str | None] = "divided by"
-    _dividend: NumericExpression
-    _divisor: NumericExpression
+    _short_operator: ClassVar[str | None] = "/"
+    _dividend: BaseExpression[N]
+    _divisor: BaseExpression[N]
 
-    def __init__(self, dividend: NumericExpression, divisor: NumericExpression) -> None:
-        self._id = uuid4()
-        self._name = None
+    def __init__(self, dividend: BaseExpression[N], divisor: BaseExpression[N]) -> None:
+        super().__init__()
         self._dividend = dividend
         self._divisor = divisor
 
     @property
-    def _operands(self) -> list[NumericExpression]:
-        return [self._dividend, self._divisor]  # Order matters.
+    def operands(self) -> list[BaseExpression[N]]:
+        return [self._dividend, self._divisor]
 
     @property
     def value(self) -> float:
         return self._dividend.value / self._divisor.value
 
-    @property
-    def reason(self) -> str:
-        return f"({self._dividend.reason}) / ({self._divisor.reason})"
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
-
-
-class Sum(NumericExpression):
+class Sum(NumericBaseExpression):
     _operator: ClassVar[str | None] = "plus"
-    _operands: list[NumericExpression]
+    _short_operator: ClassVar[str | None] = "+"
+    _operands: list[BaseExpression[N]]
 
     def __init__(
         self,
-        *unnamed_expressions: NumericExpression,
-        **named_expressions: NumericExpression | N,
+        *unnamed_expressions: BaseExpression[N],
+        **named_expressions: BaseExpression[N] | N,
     ) -> None:
-        self._id = uuid4()
-        self._name = None
+        super().__init__()
         self._operands = []
-        for o in _numeric_expressions_from(unnamed_expressions, named_expressions):
+        for o in _expressions_from(unnamed_expressions, named_expressions):
             if o._name is not None or not isinstance(o, Sum):
                 self._operands.append(o)
             else:
                 self._operands.extend(o._operands)
 
     @property
+    def operands(self) -> list[BaseExpression[N]]:
+        return self._operands
+
+    @property
     def value(self) -> N:
         return sum(o.value for o in self._operands)
 
-    @property
-    def reason(self) -> str:
-        return " + ".join(f"({o.reason})" for o in self._operands if o.value)
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
-
-
-class Difference(NumericExpression):
-    _operator: ClassVar[str | None] = "divided by"
-    _minuend: NumericExpression
-    _subtrahend: NumericExpression
+class Difference(NumericBaseExpression):
+    _operator: ClassVar[str | None] = "minus"
+    _short_operator: ClassVar[str | None] = "-"
+    _minuend: BaseExpression[N]
+    _subtrahend: BaseExpression[N]
 
     def __init__(
-        self, minuend: NumericExpression, subtrahend: NumericExpression
+        self, minuend: BaseExpression[N], subtrahend: BaseExpression[N]
     ) -> None:
-        self._id = uuid4()
-        self._name = None
+        super().__init__()
         self._minuend = minuend
         self._subtrahend = subtrahend
 
     @property
-    def _operands(self) -> list[NumericExpression]:
-        return [self._minuend, self._subtrahend]  # Order matters.
+    def operands(self) -> list[BaseExpression[N]]:
+        return [self._minuend, self._subtrahend]
 
     @property
     def value(self) -> N:
         return self._minuend.value - self._subtrahend.value
 
-    @property
-    def reason(self) -> str:
-        return f"({self._minuend.reason}) - ({self._subtrahend.reason})"
 
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
+class _NumericComparison(BooleanBaseExpression):
+    _lhs: BaseExpression[N]
+    _rhs: BaseExpression[N]
 
-
-class _NumericComparison(BooleanExpression):
-    _operator: ClassVar[str | None]
-    _lhs: NumericExpression
-    _rhs: NumericExpression
-
-    def __init__(self, lhs: NumericExpression, rhs: NumericExpression) -> None:
-        self._id = uuid4()
-        self._name = None
+    def __init__(self, lhs: BaseExpression[N], rhs: BaseExpression[N]) -> None:
+        super().__init__()
         self._lhs = lhs
         self._rhs = rhs
 
     @property
-    def _operands(self) -> list[NumericExpression]:
-        return [self._lhs, self._rhs]  # Order may matter.
-
-    def __str__(self):
-        return (
-            (f"{self._name} := " if self._name else "")
-            + f"{self.value} because "
-            + self.reason
-        )
+    def operands(self) -> list[BaseExpression[N]]:
+        return [self._lhs, self._rhs]
 
 
 class EqualToComparison(_NumericComparison):
     _operator: ClassVar[str | None] = "is equal to"
+    _short_operator: ClassVar[str | None] = "=="
 
     @property
     def value(self) -> bool:
@@ -656,17 +652,10 @@ class EqualToComparison(_NumericComparison):
     def evaluated_expression(self) -> _NumericComparison:
         return self if self.value else NotEqualToComparison(self._lhs, self._rhs)
 
-    @property
-    def reason(self) -> str:
-        return (
-            f"({self._lhs.reason}) == ({self._rhs.reason})"
-            if self.value
-            else self.evaluated_expression.reason
-        )
-
 
 class NotEqualToComparison(_NumericComparison):
     _operator: ClassVar[str | None] = "is not equal to"
+    _short_operator: ClassVar[str | None] = "!="
 
     @property
     def value(self) -> bool:
@@ -676,17 +665,10 @@ class NotEqualToComparison(_NumericComparison):
     def evaluated_expression(self) -> _NumericComparison:
         return self if self.value else EqualToComparison(self._lhs, self._rhs)
 
-    @property
-    def reason(self) -> str:
-        return (
-            f"({self._lhs.reason}) != ({self._rhs.reason})"
-            if self.value
-            else self.evaluated_expression.reason
-        )
-
 
 class GreaterThanComparison(_NumericComparison):
     _operator: ClassVar[str | None] = "is greater than"
+    _short_operator: ClassVar[str | None] = ">"
 
     @property
     def value(self) -> bool:
@@ -696,17 +678,10 @@ class GreaterThanComparison(_NumericComparison):
     def evaluated_expression(self) -> _NumericComparison:
         return self if self.value else LessThanOrEqualToComparison(self._lhs, self._rhs)
 
-    @property
-    def reason(self) -> str:
-        return (
-            f"({self._lhs.reason}) > ({self._rhs.reason})"
-            if self.value
-            else self.evaluated_expression.reason
-        )
-
 
 class GreaterThanOrEqualToComparison(_NumericComparison):
     _operator: ClassVar[str | None] = "is greater than or equal to"
+    _short_operator: ClassVar[str | None] = ">="
 
     @property
     def value(self) -> bool:
@@ -716,17 +691,10 @@ class GreaterThanOrEqualToComparison(_NumericComparison):
     def evaluated_expression(self) -> _NumericComparison:
         return self if self.value else LessThanComparison(self._lhs, self._rhs)
 
-    @property
-    def reason(self) -> str:
-        return (
-            f"({self._lhs.reason}) >= ({self._rhs.reason})"
-            if self.value
-            else self.evaluated_expression.reason
-        )
-
 
 class LessThanComparison(_NumericComparison):
     _operator: ClassVar[str | None] = "is less than"
+    _short_operator: ClassVar[str | None] = "<"
 
     @property
     def value(self) -> bool:
@@ -738,17 +706,10 @@ class LessThanComparison(_NumericComparison):
             self if self.value else GreaterThanOrEqualToComparison(self._lhs, self._rhs)
         )
 
-    @property
-    def reason(self) -> str:
-        return (
-            f"({self._lhs.reason}) < ({self._rhs.reason})"
-            if self.value
-            else self.evaluated_expression.reason
-        )
-
 
 class LessThanOrEqualToComparison(_NumericComparison):
     _operator: ClassVar[str | None] = "is less than or equal to"
+    _short_operator: ClassVar[str | None] = "<="
 
     @property
     def value(self) -> bool:
@@ -757,33 +718,3 @@ class LessThanOrEqualToComparison(_NumericComparison):
     @property
     def evaluated_expression(self) -> _NumericComparison:
         return self if self.value else GreaterThanComparison(self._lhs, self._rhs)
-
-    @property
-    def reason(self) -> str:
-        return (
-            f"({self._lhs.reason}) <= ({self._rhs.reason})"
-            if self.value
-            else self.evaluated_expression.reason
-        )
-
-
-def _one_numeric_expression_from(
-    unnamed_expressions: tuple[NumericExpression, ...],
-    named_expressions: dict[str, NumericExpression | N],
-) -> NumericExpression:
-    return get_exactly_one(
-        _numeric_expressions_from(unnamed_expressions, named_expressions)
-    )
-
-
-def _numeric_expressions_from(
-    unnamed_expressions: tuple[NumericExpression, ...],
-    named_expressions: dict[str, NumericExpression | N],
-) -> list[NumericExpression]:
-    expressions = list(unnamed_expressions) + [
-        (e if isinstance(e, NumericExpression) else NumericExpression(e)).with_name(n)
-        for n, e in named_expressions.items()
-    ]
-    if len(expressions) == 0:
-        raise Exception
-    return expressions
