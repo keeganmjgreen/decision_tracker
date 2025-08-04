@@ -374,8 +374,8 @@ class If:
         self,
         *unnamed_expressions: BaseExpression[RT] | RT,
         **named_expressions: BaseExpression[RT] | RT,
-    ) -> IncompleteConditional[RT]:
-        return IncompleteConditional(
+    ) -> Then[RT]:
+        return Then(
             result_if_true=_one_expression_from(unnamed_expressions, named_expressions),
             condition=self._condition,
         )
@@ -410,13 +410,6 @@ class IncompleteConditional[RT]:
         else:
             return last_conditional
 
-    def elif_(
-        self,
-        *unnamed_expressions: BaseExpression[bool] | bool,
-        **named_expressions: BaseExpression[bool] | bool,
-    ) -> Elif[RT]:
-        return Elif(self, *unnamed_expressions, **named_expressions)
-
 
 class TwoThirdsTernary[RT](IncompleteConditional[RT]):
     def and_(
@@ -438,6 +431,15 @@ class TwoThirdsTernary[RT](IncompleteConditional[RT]):
             result_if_true=self._result_if_true,
             condition=Or(self._condition, *unnamed_expressions, **named_expressions),
         )
+
+
+class Then[RT](IncompleteConditional[RT]):
+    def elif_(
+        self,
+        *unnamed_expressions: BaseExpression[bool] | bool,
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> Elif[RT]:
+        return Elif(self, *unnamed_expressions, **named_expressions)
 
 
 class Elif[RT](If):
@@ -476,12 +478,10 @@ class Elif[RT](If):
         self,
         *unnamed_expressions: BaseExpression[RT] | RT,
         **named_expressions: BaseExpression[RT] | RT,
-    ) -> IncompleteConditional[RT]:
-        incomplete_conditional = super().then(*unnamed_expressions, **named_expressions)
-        incomplete_conditional.previous_incomplete_conditional = (
-            self._previous_incomplete_conditional
-        )
-        return incomplete_conditional
+    ) -> Then[RT]:
+        then = super().then(*unnamed_expressions, **named_expressions)
+        then.previous_incomplete_conditional = self._previous_incomplete_conditional
+        return then
 
 
 class Conditional[RT](BaseExpression[RT]):
