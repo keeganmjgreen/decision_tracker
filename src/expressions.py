@@ -80,7 +80,7 @@ class BaseExpression[T](abc.ABC):
         **named_expressions: BaseExpression[bool] | bool,
     ) -> TwoThirdsTernary[T]:
         condition = _one_boolean_expression_from(unnamed_expressions, named_expressions)
-        return TwoThirdsTernary(result_if_true=_value_of(self), condition=condition)
+        return TwoThirdsTernary(result_if_true=self, condition=condition)
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, BaseExpression):
@@ -158,14 +158,6 @@ def _expressions_from[T](
     if len(expressions) == 0:
         raise Exception
     return expressions
-
-
-def _value_of[T](x: BaseExpression[T] | T) -> T:
-    if isinstance(x, BaseExpression):
-        x = cast(BaseExpression[T], x)
-        return x.value
-    else:
-        return x
 
 
 # ======================================================================================
@@ -388,14 +380,18 @@ class If:
 
 
 class IncompleteConditional[RT]:
-    _result_if_true: BaseExpression[RT] | RT
+    _result_if_true: BaseExpression[RT]
     _condition: BaseExpression[bool]
     previous_incomplete_conditional: IncompleteConditional[RT] | None
 
     def __init__(
         self, result_if_true: BaseExpression[RT] | RT, condition: BaseExpression[bool]
     ) -> None:
-        self._result_if_true = result_if_true
+        self._result_if_true = (
+            result_if_true
+            if isinstance(result_if_true, BaseExpression)
+            else BaseLiteralExpression[RT](result_if_true)
+        )
         self._condition = condition
         self.previous_incomplete_conditional = None
 
@@ -491,9 +487,9 @@ class Elif[RT](If):
 
 
 class Conditional[RT](BaseExpression[RT]):
-    _result_if_true: BaseExpression[RT] | RT
+    _result_if_true: BaseExpression[RT]
     _condition: BaseExpression[bool]
-    _result_if_false: BaseExpression[RT] | RT
+    _result_if_false: BaseExpression[RT]
 
     def __init__(
         self,
@@ -502,13 +498,21 @@ class Conditional[RT](BaseExpression[RT]):
         result_if_false: BaseExpression[RT] | RT,
     ) -> None:
         super().__init__()
-        self._result_if_true = result_if_true
+        self._result_if_true = (
+            result_if_true
+            if isinstance(result_if_true, BaseExpression)
+            else BaseLiteralExpression[RT](result_if_true)
+        )
         self._condition = (
             condition
             if isinstance(condition, BaseExpression)
             else BaseLiteralExpression[bool](condition)
         )
-        self._result_if_false = result_if_false
+        self._result_if_false = (
+            result_if_false
+            if isinstance(result_if_false, BaseExpression)
+            else BaseLiteralExpression[RT](result_if_false)
+        )
 
     @property
     def operands(self) -> list[BaseExpression[bool]]:
@@ -517,9 +521,9 @@ class Conditional[RT](BaseExpression[RT]):
     @property
     def value(self) -> RT:
         return (
-            _value_of(self._result_if_true)
-            if _value_of(self._condition)
-            else _value_of(self._result_if_false)
+            self._result_if_true.value
+            if self._condition.value
+            else self._result_if_false.value
         )
 
     @property
