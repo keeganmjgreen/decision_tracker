@@ -624,11 +624,8 @@ class NumericBaseExpression(BaseExpression[N]):
         self,
         *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
-    ) -> Quotient:
-        return Quotient(
-            dividend=self,
-            divisor=_one_expression_from(unnamed_expressions, named_expressions),
-        )
+    ) -> Product:
+        return Product(self, Inverse(*unnamed_expressions, **named_expressions))
 
     def plus(
         self,
@@ -641,11 +638,8 @@ class NumericBaseExpression(BaseExpression[N]):
         self,
         *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
-    ) -> Difference:
-        return Difference(
-            minuend=self,
-            subtrahend=_one_expression_from(unnamed_expressions, named_expressions),
-        )
+    ) -> Sum:
+        return Sum(self, Negative(*unnamed_expressions, **named_expressions))
 
     def eq(
         self,
@@ -736,27 +730,46 @@ class Product(NumericBaseExpression):
     def value(self) -> N:
         return math.prod(o.value for o in self._operands)
 
+    @property
+    def reason(self) -> str:
+        reason_string = ""
+        if isinstance(self._operands[0], Inverse):
+            reason_string += f"1 {Inverse._short_operator} "  # type: ignore
+        reason_string += f"{self._operands[0].reason}"
+        for operand in self._operands[1:]:
+            operator = (
+                Inverse._short_operator  # type: ignore
+                if isinstance(operand, Inverse)
+                else self._short_operator
+            )
+            reason_string += f" {operator} {operand.reason}"
+        return reason_string
 
-class Quotient(NumericBaseExpression):
-    _operator: ClassVar[str | None] = "divided by"
-    _short_operator: ClassVar[str | None] = "/"
-    _dividend: BaseExpression[N]
-    _divisor: BaseExpression[N]
+
+class Inverse(NumericBaseExpression):
+    _operator: ClassVar[str | None] = "/"
+    _short_operator: ClassVar[str | None] = _operator
+    _operand: BaseExpression[N]
 
     def __init__(
-        self, dividend: BaseExpression[N] | N, divisor: BaseExpression[N] | N
+        self,
+        *unnamed_expressions: BaseExpression[N] | N,
+        **named_expressions: BaseExpression[N] | N,
     ) -> None:
         super().__init__()
-        self._dividend = _ensure_expression(dividend)
-        self._divisor = _ensure_expression(divisor)
+        self._operand = _one_expression_from(unnamed_expressions, named_expressions)
 
     @property
     def operands(self) -> list[BaseExpression[N]]:
-        return [self._dividend, self._divisor]
+        return [self._operand]
 
     @property
     def value(self) -> float:
-        return self._dividend.value / self._divisor.value
+        return 1 / self._operand.value
+
+    @property
+    def reason(self) -> str:
+        return f" {self._short_operator} {self._operand.reason}"
 
 
 class Sum(NumericBaseExpression):
@@ -785,27 +798,46 @@ class Sum(NumericBaseExpression):
     def value(self) -> N:
         return sum(o.value for o in self._operands)
 
+    @property
+    def reason(self) -> str:
+        reason_string = ""
+        if isinstance(self._operands[0], Negative):
+            reason_string += f"{Negative._short_operator} "  # type: ignore
+        reason_string += f"{self._operands[0].reason}"
+        for operand in self._operands[1:]:
+            operator = (
+                Negative._short_operator  # type: ignore
+                if isinstance(operand, Negative)
+                else self._short_operator
+            )
+            reason_string += f" {operator} {operand.reason}"
+        return reason_string
 
-class Difference(NumericBaseExpression):
-    _operator: ClassVar[str | None] = "minus"
-    _short_operator: ClassVar[str | None] = "-"
-    _minuend: BaseExpression[N]
-    _subtrahend: BaseExpression[N]
+
+class Negative(NumericBaseExpression):
+    _operator: ClassVar[str | None] = "-"
+    _short_operator: ClassVar[str | None] = _operator
+    _operand: BaseExpression[N]
 
     def __init__(
-        self, minuend: BaseExpression[N] | N, subtrahend: BaseExpression[N] | N
+        self,
+        *unnamed_expressions: BaseExpression[N] | N,
+        **named_expressions: BaseExpression[N] | N,
     ) -> None:
         super().__init__()
-        self._minuend = _ensure_expression(minuend)
-        self._subtrahend = _ensure_expression(subtrahend)
+        self._operand = _one_expression_from(unnamed_expressions, named_expressions)
 
     @property
     def operands(self) -> list[BaseExpression[N]]:
-        return [self._minuend, self._subtrahend]
+        return [self._operand]
 
     @property
     def value(self) -> N:
-        return self._minuend.value - self._subtrahend.value
+        return -self._operand.value
+
+    @property
+    def reason(self) -> str:
+        return f" {self._short_operator} {self._operand.reason}"
 
 
 class _NumericComparison(BooleanBaseExpression):
