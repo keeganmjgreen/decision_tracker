@@ -8,7 +8,7 @@ CREATE TABLE evaluated_expression (
     id UUID PRIMARY KEY,
     parent_id UUID,
     name VARCHAR NULL,
-    value JSONB NOT NULL,
+    value JSONB,
     operator operator NOT NULL
 
     CONSTRAINT FOREIGN KEY parent_id REFERENCES evaluated_expression(id)

@@ -889,3 +889,69 @@ class LessThanOrEqualToComparison(_NumericComparison):
     @property
     def evaluated_expression(self) -> _NumericComparison:
         return self if self.value else GreaterThanComparison(self._lhs, self._rhs)
+
+
+# ======================================================================================
+# Nullable expression
+
+
+class IsOrIsNotNullExpression[T: BaseExpression[object]](BooleanBaseExpression):
+    _operator: ClassVar[str | None] = "is"
+    _short_operator: ClassVar[str | None] = _operator
+    _val: T | BaseExpression[None]
+
+    def __init__(self, val: T | BaseExpression[None]) -> None:
+        super().__init__()
+        self._val = val
+
+    @property
+    def operands(self) -> list[BaseExpression[object] | BaseExpression[None]]:
+        return [
+            self._val if self._val.value is not None else BaseLiteralExpression(None),
+            BaseLiteralExpression(None),
+        ]
+
+
+class IsNullExpression[T: BaseExpression[object]](IsOrIsNotNullExpression[T]):
+    @property
+    def value(self) -> bool:
+        return self._val.value is None
+
+    @property
+    def evaluated_expression(self) -> BooleanBaseExpression:
+        return self if self.value else IsNotNullExpression(self._val)
+
+
+class IsNotNullExpression[T: BaseExpression[object]](IsOrIsNotNullExpression[T]):
+    @property
+    def value(self) -> bool:
+        return self._val.value is not None
+
+    @property
+    def evaluated_expression(self) -> BooleanBaseExpression:
+        return self if self.value else IsNullExpression(self._val)
+
+
+class Nullable[T: BaseExpression[object]]:
+    val: T | BaseLiteralExpression[None]
+
+    def __init__(self, val: T | BaseExpression[None]) -> None:
+        self._val = val
+
+    @property
+    def is_null(self) -> IsNullExpression[T]:
+        return IsNullExpression(self.val)
+
+    @property
+    def is_not_null(self) -> IsNotNullExpression[T]:
+        return IsNotNullExpression(self.val)
+
+    @property
+    def not_null(self) -> T:
+        if self.is_null.value:
+            raise Exception
+        else:
+            return cast(T, self.val)
+
+
+# ======================================================================================
