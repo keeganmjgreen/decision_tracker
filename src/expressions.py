@@ -319,7 +319,7 @@ class Conditional(Expression[Any]):
         )
 
     @staticmethod
-    def _value_of(x: Expression[Any] | Any) -> Any:
+    def _value_of[T](x: Expression[T] | T) -> T:
         if isinstance(x, Expression):
             return x.value
         else:
