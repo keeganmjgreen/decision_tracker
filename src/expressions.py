@@ -736,10 +736,6 @@ class Product(NumericBaseExpression):
     def value(self) -> N:
         return math.prod(o.value for o in self._operands)
 
-    @property
-    def reason(self) -> str:
-        return " * ".join(f"({o.reason})" for o in self._operands)
-
 
 class Quotient(NumericBaseExpression):
     _operator: ClassVar[str | None] = "divided by"
