@@ -615,14 +615,14 @@ N = int | float
 class NumericBaseExpression(BaseExpression[N]):
     def times(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> Product:
         return Product(self, *_expressions_from(unnamed_expressions, named_expressions))
 
     def divided_by(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> Quotient:
         return Quotient(
@@ -632,14 +632,14 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def plus(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> Sum:
         return Sum(self, *_expressions_from(unnamed_expressions, named_expressions))
 
     def minus(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> Difference:
         return Difference(
@@ -649,7 +649,7 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def eq(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> EqualToComparison:
         return EqualToComparison(
@@ -658,7 +658,7 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def neq(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> NotEqualToComparison:
         return NotEqualToComparison(
@@ -667,7 +667,7 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def gt(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> GreaterThanComparison:
         return GreaterThanComparison(
@@ -676,7 +676,7 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def gte(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> GreaterThanOrEqualToComparison:
         return GreaterThanOrEqualToComparison(
@@ -685,7 +685,7 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def lt(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> LessThanComparison:
         return LessThanComparison(
@@ -694,7 +694,7 @@ class NumericBaseExpression(BaseExpression[N]):
 
     def lte(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> LessThanOrEqualToComparison:
         return LessThanOrEqualToComparison(
