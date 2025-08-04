@@ -339,14 +339,14 @@ class TestLessThanOrEqualToComparison:
 
 
 def test_inserting_expression_into_db(db_engine: sqla.Engine) -> None:
-    y = Not(x=True)
+    y = Not(x=True).with_name("y")
     y.to_db(db_engine)
     with Session(db_engine) as session:
         records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
         record_1, record_2 = records
         assert isinstance(record_1.id, UUID)
         assert record_1.parent_id is None
-        assert record_1.name is None
+        assert record_1.name == "y"
         assert record_1.value is False
         assert record_1.operator == "not"
         assert record_2.parent_id == record_1.id
