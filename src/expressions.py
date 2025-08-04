@@ -147,14 +147,8 @@ def _expressions_from[T](
     named_expressions: dict[str, BaseExpression[T] | T],
 ) -> list[BaseExpression[T]]:
     expressions: list[BaseExpression[T]] = [
-        (e if isinstance(e, BaseExpression) else BaseLiteralExpression[T](e))
-        for e in unnamed_expressions
-    ] + [
-        (e if isinstance(e, BaseExpression) else BaseLiteralExpression[T](e)).with_name(
-            n
-        )
-        for n, e in named_expressions.items()
-    ]
+        _ensure_expression(e) for e in unnamed_expressions
+    ] + [_ensure_expression(e).with_name(n) for n, e in named_expressions.items()]
     if len(expressions) == 0:
         raise Exception
     return expressions
@@ -328,6 +322,14 @@ def _one_boolean_expression_from(
         return get_exactly_one(expressions)
 
 
+def _ensure_expression[T](input: BaseExpression[T] | T) -> BaseExpression[T]:
+    return (
+        cast(BaseExpression[T], input)
+        if isinstance(input, BaseExpression)
+        else BaseLiteralExpression[T](input)
+    )
+
+
 # ======================================================================================
 # Conditional expressions
 
@@ -387,11 +389,7 @@ class IncompleteConditional[RT]:
     def __init__(
         self, result_if_true: BaseExpression[RT] | RT, condition: BaseExpression[bool]
     ) -> None:
-        self._result_if_true = (
-            result_if_true
-            if isinstance(result_if_true, BaseExpression)
-            else BaseLiteralExpression[RT](result_if_true)
-        )
+        self._result_if_true = _ensure_expression(result_if_true)
         self._condition = condition
         self.previous_incomplete_conditional = None
 
@@ -498,21 +496,9 @@ class Conditional[RT](BaseExpression[RT]):
         result_if_false: BaseExpression[RT] | RT,
     ) -> None:
         super().__init__()
-        self._result_if_true = (
-            result_if_true
-            if isinstance(result_if_true, BaseExpression)
-            else BaseLiteralExpression[RT](result_if_true)
-        )
-        self._condition = (
-            condition
-            if isinstance(condition, BaseExpression)
-            else BaseLiteralExpression[bool](condition)
-        )
-        self._result_if_false = (
-            result_if_false
-            if isinstance(result_if_false, BaseExpression)
-            else BaseLiteralExpression[RT](result_if_false)
-        )
+        self._result_if_true = _ensure_expression(result_if_true)
+        self._condition = _ensure_expression(condition)
+        self._result_if_false = _ensure_expression(result_if_false)
 
     @property
     def operands(self) -> list[BaseExpression[bool]]:
@@ -560,20 +546,9 @@ class Lookup[K, V](BaseExpression[V]):
         default: BaseExpression[V] | V,
     ) -> None:
         super().__init__()
-        self._lookup_dict = {
-            k: (v if isinstance(v, BaseExpression) else BaseLiteralExpression[V](v))
-            for k, v in lookup_dict.items()
-        }
-        self._look_up_key = (
-            look_up_key
-            if isinstance(look_up_key, BaseExpression)
-            else BaseLiteralExpression[K](look_up_key)
-        )
-        self._default = (
-            default
-            if isinstance(default, BaseExpression)
-            else BaseLiteralExpression[V](default)
-        )
+        self._lookup_dict = {k: _ensure_expression(v) for k, v in lookup_dict.items()}
+        self._look_up_key = _ensure_expression(look_up_key)
+        self._default = _ensure_expression(default)
 
     @property
     def operands(self) -> list[BaseExpression[bool]]:
