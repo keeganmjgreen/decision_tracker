@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import math
 from copy import deepcopy
-from typing import Any, ClassVar, Self, cast, override
+from typing import Any, ClassVar, Self, TypeVar, cast, override
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine
@@ -175,6 +175,9 @@ def _value_of[T](x: BaseExpression[T] | T) -> T:
 # Boolean expressions
 
 
+RT = TypeVar("RT")
+
+
 class BooleanBaseExpression(BaseExpression[bool]):
     @property
     @override
@@ -340,28 +343,88 @@ def _one_boolean_expression_from(
 # Conditional expressions
 
 
+class If:
+    _condition: BaseExpression[bool]
+
+    def __init__(
+        self,
+        *unnamed_expressions: BaseExpression[bool] | bool,
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> None:
+        self._condition = _one_boolean_expression_from(
+            unnamed_expressions, named_expressions
+        )
+
+    def then(
+        self,
+        *unnamed_expressions: BaseExpression[RT] | RT,
+        **named_expressions: BaseExpression[RT] | RT,
+    ) -> IncompleteConditional[RT]:
+        return IncompleteConditional(
+            result_if_true=_one_expression_from(unnamed_expressions, named_expressions),
+            condition=self._condition,
+        )
+
+
 class IncompleteConditional[RT]:
     _result_if_true: BaseExpression[RT] | RT
     _condition: BaseExpression[bool]
+    previous_incomplete_conditional: IncompleteConditional[RT] | None
 
     def __init__(
         self, result_if_true: BaseExpression[RT] | RT, condition: BaseExpression[bool]
     ) -> None:
         self._result_if_true = result_if_true
         self._condition = condition
+        self.previous_incomplete_conditional = None
 
     def else_(
         self,
         *unnamed_expressions: BaseExpression[RT] | RT,
         **named_expressions: BaseExpression[RT] | RT,
     ) -> Conditional[RT]:
-        return Conditional(
+        last_conditional = Conditional(
             self._result_if_true,
             self._condition,
             result_if_false=_one_expression_from(
                 unnamed_expressions, named_expressions
             ),
         )
+        if self.previous_incomplete_conditional is not None:
+            return self.previous_incomplete_conditional.else_(last_conditional)
+        else:
+            return last_conditional
+
+    def elif_(
+        self,
+        *unnamed_expressions: BaseExpression[bool] | bool,
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> Elif[RT]:
+        return Elif(self, *unnamed_expressions, **named_expressions)
+
+
+class Elif[RT](If):
+    _previous_incomplete_conditional: IncompleteConditional[RT]
+
+    def __init__(
+        self,
+        previous_incomplete_conditional: IncompleteConditional[RT],
+        *unnamed_expressions: BaseExpression[bool] | bool,
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> None:
+        super().__init__(*unnamed_expressions, **named_expressions)
+        self._previous_incomplete_conditional = previous_incomplete_conditional
+
+    def then(
+        self,
+        *unnamed_expressions: BaseExpression[RT] | RT,
+        **named_expressions: BaseExpression[RT] | RT,
+    ) -> IncompleteConditional[RT]:
+        incomplete_conditional = super().then(*unnamed_expressions, **named_expressions)
+        incomplete_conditional.previous_incomplete_conditional = (
+            self._previous_incomplete_conditional
+        )
+        return incomplete_conditional
 
 
 class Conditional[RT](BaseExpression[RT]):
