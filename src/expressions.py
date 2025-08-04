@@ -78,12 +78,9 @@ class BaseExpression[T](abc.ABC):
         self,
         *unnamed_expressions: BaseExpression[bool],
         **named_expressions: BaseExpression[bool] | bool,
-    ) -> IncompleteConditional[T]:
+    ) -> TwoThirdsTernary[T]:
         condition = _one_boolean_expression_from(unnamed_expressions, named_expressions)
-        return IncompleteConditional(
-            result_if_true=_value_of(self),
-            condition=condition,
-        )
+        return TwoThirdsTernary(result_if_true=_value_of(self), condition=condition)
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, BaseExpression):
@@ -425,6 +422,28 @@ class IncompleteConditional[RT]:
         **named_expressions: BaseExpression[bool] | bool,
     ) -> Elif[RT]:
         return Elif(self, *unnamed_expressions, **named_expressions)
+
+
+class TwoThirdsTernary[RT](IncompleteConditional[RT]):
+    def and_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> TwoThirdsTernary[RT]:
+        return TwoThirdsTernary(
+            result_if_true=self._result_if_true,
+            condition=And(self._condition, *unnamed_expressions, **named_expressions),
+        )
+
+    def or_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> TwoThirdsTernary[RT]:
+        return TwoThirdsTernary(
+            result_if_true=self._result_if_true,
+            condition=Or(self._condition, *unnamed_expressions, **named_expressions),
+        )
 
 
 class Elif[RT](If):
