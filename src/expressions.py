@@ -43,6 +43,7 @@ class Expression[T]:
                 self._name == other._name
                 and self._operator == other._operator
                 and self._operands == other._operands
+                and self.value == other.value
             )
         else:
             return False
