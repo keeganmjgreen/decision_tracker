@@ -53,11 +53,11 @@ class Expression[T]:
 
     def if_(
         self,
-        *unnamed_conditions: BooleanExpression,
-        **named_conditions: BooleanExpression | bool,
+        *unnamed_expressions: BooleanExpression,
+        **named_expressions: BooleanExpression | bool,
     ) -> IncompleteConditional:
         condition = _handle_boolean_expressions(
-            unnamed_conditions, named_conditions, multiple_output=False
+            unnamed_expressions, named_expressions, multiple_output=False
         )
         return IncompleteConditional(
             result_if_true=(self.value if type(self) is Expression else self),
@@ -100,30 +100,30 @@ class BooleanExpression(Expression[bool]):
 
     def and_(
         self,
-        *unnamed_conditions: BooleanExpression,
-        **named_conditions: BooleanExpression | bool,
+        *unnamed_expressions: BooleanExpression,
+        **named_expressions: BooleanExpression | bool,
     ) -> And:
         return And(
             self,
             *cast(
                 list[BooleanExpression],
                 _handle_boolean_expressions(
-                    unnamed_conditions, named_conditions, multiple_output=True
+                    unnamed_expressions, named_expressions, multiple_output=True
                 ),
             ),
         )
 
     def or_(
         self,
-        *unnamed_conditions: BooleanExpression,
-        **named_conditions: BooleanExpression | bool,
+        *unnamed_expressions: BooleanExpression,
+        **named_expressions: BooleanExpression | bool,
     ) -> Or:
         return Or(
             self,
             cast(
                 BooleanExpression,
                 _handle_boolean_expressions(
-                    unnamed_conditions, named_conditions, multiple_output=False
+                    unnamed_expressions, named_expressions, multiple_output=False
                 ),
             ),
         )
@@ -139,15 +139,15 @@ class Not(BooleanExpression):
 
     def __init__(
         self,
-        *unnamed_conditions: BooleanExpression,
-        **named_conditions: BooleanExpression | bool,
+        *unnamed_expressions: BooleanExpression,
+        **named_expressions: BooleanExpression | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
         self._operand = cast(
             BooleanExpression,
             _handle_boolean_expressions(
-                unnamed_conditions, named_conditions, multiple_output=False
+                unnamed_expressions, named_expressions, multiple_output=False
             ),
         )
 
@@ -185,15 +185,15 @@ class And(BooleanExpression):
 
     def __init__(
         self,
-        *unnamed_conditions: BooleanExpression,
-        **named_conditions: BooleanExpression | bool,
+        *unnamed_expressions: BooleanExpression,
+        **named_expressions: BooleanExpression | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
         self._operands = []
         for o in cast(
             list[BooleanExpression],
-            _handle_boolean_expressions(unnamed_conditions, named_conditions),
+            _handle_boolean_expressions(unnamed_expressions, named_expressions),
         ):
             if o._name is not None or not isinstance(o, And):
                 self._operands.append(o)
@@ -236,15 +236,15 @@ class Or(BooleanExpression):
 
     def __init__(
         self,
-        *unnamed_conditions: BooleanExpression,
-        **named_conditions: BooleanExpression | bool,
+        *unnamed_expressions: BooleanExpression,
+        **named_expressions: BooleanExpression | bool,
     ) -> None:
         self._id = uuid4()
         self._name = None
         self._operands = []
         for o in cast(
             list[BooleanExpression],
-            _handle_boolean_expressions(unnamed_conditions, named_conditions),
+            _handle_boolean_expressions(unnamed_expressions, named_expressions),
         ):
             if o._name is not None or not isinstance(o, Or):
                 self._operands.append(o)
