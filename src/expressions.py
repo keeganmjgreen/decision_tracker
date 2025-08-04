@@ -139,17 +139,20 @@ class BaseLiteralExpression[T](BaseExpression[T]):
 
 
 def _one_expression_from[T](
-    unnamed_expressions: tuple[BaseExpression[T], ...],
+    unnamed_expressions: tuple[BaseExpression[T] | T, ...],
     named_expressions: dict[str, BaseExpression[T] | T],
 ) -> BaseExpression[T]:
     return get_exactly_one(_expressions_from(unnamed_expressions, named_expressions))
 
 
 def _expressions_from[T](
-    unnamed_expressions: tuple[BaseExpression[T], ...],
+    unnamed_expressions: tuple[BaseExpression[T] | T, ...],
     named_expressions: dict[str, BaseExpression[T] | T],
 ) -> list[BaseExpression[T]]:
-    expressions = list(unnamed_expressions) + [
+    expressions: list[BaseExpression[T]] = [
+        (e if isinstance(e, BaseExpression) else BaseLiteralExpression[T](e))
+        for e in unnamed_expressions
+    ] + [
         (e if isinstance(e, BaseExpression) else BaseLiteralExpression[T](e)).with_name(
             n
         )
@@ -320,7 +323,7 @@ class Or(BooleanBaseExpression):
 
 
 def _one_boolean_expression_from(
-    unnamed_expressions: tuple[BaseExpression[bool], ...],
+    unnamed_expressions: tuple[BaseExpression[bool] | bool, ...],
     named_expressions: dict[str, BaseExpression[bool] | bool],
     allow_multiple_input: bool = True,
 ) -> BaseExpression[bool]:
@@ -349,22 +352,14 @@ class IncompleteConditional[RT]:
 
     def else_(
         self,
-        *unnamed_values: BaseExpression[RT] | RT,
-        **named_values: BaseExpression[RT] | RT,
+        *unnamed_expressions: BaseExpression[RT] | RT,
+        **named_expressions: BaseExpression[RT] | RT,
     ) -> Conditional[RT]:
-        unnamed_value_list: list[BaseExpression[RT]] = [
-            (
-                unnamed_value
-                if isinstance(unnamed_value, BaseExpression)
-                else BaseLiteralExpression[RT](unnamed_value)
-            )
-            for unnamed_value in unnamed_values
-        ]
         return Conditional(
             self._result_if_true,
             self._condition,
             result_if_false=_one_expression_from(
-                tuple(unnamed_value_list), named_values
+                unnamed_expressions, named_expressions
             ),
         )
 
