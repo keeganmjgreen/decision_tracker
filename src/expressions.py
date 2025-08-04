@@ -53,7 +53,7 @@ class Expression[T]:
         *unnamed_conditions: BooleanExpression,
         **named_conditions: BooleanExpression | bool,
     ) -> IncompleteConditional:
-        condition = _handle_expressions(
+        condition = _handle_boolean_expressions(
             unnamed_conditions, named_conditions, multiple_output=False
         )
         return IncompleteConditional(
@@ -100,7 +100,7 @@ class BooleanExpression(Expression[bool]):
             self,
             *cast(
                 list[BooleanExpression],
-                _handle_expressions(
+                _handle_boolean_expressions(
                     unnamed_conditions, named_conditions, multiple_output=True
                 ),
             ),
@@ -115,7 +115,7 @@ class BooleanExpression(Expression[bool]):
             self,
             cast(
                 BooleanExpression,
-                _handle_expressions(
+                _handle_boolean_expressions(
                     unnamed_conditions, named_conditions, multiple_output=False
                 ),
             ),
@@ -139,7 +139,7 @@ class Not(BooleanExpression):
         self._name = None
         self._operand = cast(
             BooleanExpression,
-            _handle_expressions(
+            _handle_boolean_expressions(
                 unnamed_conditions, named_conditions, multiple_output=False
             ),
         )
@@ -186,7 +186,7 @@ class And(BooleanExpression):
         self._operands = []
         for o in cast(
             list[BooleanExpression],
-            _handle_expressions(unnamed_conditions, named_conditions),
+            _handle_boolean_expressions(unnamed_conditions, named_conditions),
         ):
             if o._name is not None or not isinstance(o, And):
                 self._operands.append(o)
@@ -237,7 +237,7 @@ class Or(BooleanExpression):
         self._operands = []
         for o in cast(
             list[BooleanExpression],
-            _handle_expressions(unnamed_conditions, named_conditions),
+            _handle_boolean_expressions(unnamed_conditions, named_conditions),
         ):
             if o._name is not None or not isinstance(o, Or):
                 self._operands.append(o)
@@ -337,7 +337,7 @@ class Conditional(Expression[Any]):
         )
 
 
-def _handle_expressions(
+def _handle_boolean_expressions(
     unnamed_expressions: tuple[BooleanExpression, ...],
     named_expressions: dict[str, BooleanExpression | bool],
     allow_multiple_input: bool = True,
