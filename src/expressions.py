@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import math
 from copy import deepcopy
-from typing import Any, ClassVar, Self, TypeVar, cast, override
+from typing import Any, Callable, ClassVar, Self, TypeVar, cast, override
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine
@@ -96,7 +96,7 @@ class BaseExpression[T](abc.ABC):
 
 
 class BaseLiteralExpression[T](BaseExpression[T]):
-    _literal_value: T
+    _literal_value: T | Callable[[], T]
     _operator: ClassVar[str | None] = None
     _short_operator: ClassVar[str | None] = _operator
 
@@ -115,7 +115,11 @@ class BaseLiteralExpression[T](BaseExpression[T]):
 
     @property
     def value(self) -> T:
-        return self._literal_value
+        return (
+            cast(T, self._literal_value())
+            if callable(self._literal_value)
+            else self._literal_value
+        )
 
     @property
     def operands(self) -> list[BaseExpression[T]]:
