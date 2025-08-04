@@ -355,6 +355,30 @@ class If:
             unnamed_expressions, named_expressions
         )
 
+    def and_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> If:
+        return If(
+            And(
+                self._condition,
+                *_expressions_from(unnamed_expressions, named_expressions),
+            )
+        )
+
+    def or_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> If:
+        return If(
+            Or(
+                self._condition,
+                _one_boolean_expression_from(unnamed_expressions, named_expressions),
+            )
+        )
+
     def then(
         self,
         *unnamed_expressions: BaseExpression[RT] | RT,
@@ -414,6 +438,26 @@ class Elif[RT](If):
     ) -> None:
         super().__init__(*unnamed_expressions, **named_expressions)
         self._previous_incomplete_conditional = previous_incomplete_conditional
+
+    def and_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> Elif[RT]:
+        return Elif(
+            self._previous_incomplete_conditional,
+            super().and_(*unnamed_expressions, **named_expressions)._condition,
+        )
+
+    def or_(
+        self,
+        *unnamed_expressions: BaseExpression[bool],
+        **named_expressions: BaseExpression[bool] | bool,
+    ) -> Elif[RT]:
+        return Elif(
+            self._previous_incomplete_conditional,
+            super().or_(*unnamed_expressions, **named_expressions)._condition,
+        )
 
     def then(
         self,
