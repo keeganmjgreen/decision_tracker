@@ -11,13 +11,6 @@ from schema import EvaluatedExpressionRecord
 from utils import get_exactly_one
 
 
-def _value(x: Expression[Any] | Any) -> Any:
-    if isinstance(x, Expression):
-        return x.value
-    else:
-        return x
-
-
 class Expression[T]:
     value: T
     _id: UUID
@@ -320,10 +313,17 @@ class Conditional(Expression[Any]):
     @property
     def value(self) -> bool:
         return (
-            _value(self._result_if_true)
-            if _value(self._condition)
-            else _value(self._result_if_false)
+            self._value_of(self._result_if_true)
+            if self._value_of(self._condition)
+            else self._value_of(self._result_if_false)
         )
+
+    @staticmethod
+    def _value_of(x: Expression[Any] | Any) -> Any:
+        if isinstance(x, Expression):
+            return x.value
+        else:
+            return x
 
     @property
     def evaluated_expression(self) -> BooleanExpression:
