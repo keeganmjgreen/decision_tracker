@@ -94,6 +94,21 @@ class BaseExpression[T](abc.ABC):
         else:
             return False
 
+    @property
+    def is_null(self) -> IsNullExpression[T]:
+        return IsNullExpression(self)
+
+    @property
+    def is_not_null(self) -> IsNotNullExpression[T]:
+        return IsNotNullExpression(self)
+
+    @property
+    def not_null(self) -> T:
+        if self.is_null.value:
+            raise Exception
+        else:
+            return cast(T, self)
+
 
 class BaseLiteralExpression[T](BaseExpression[T]):
     _literal_value: T | Callable[[], T]
@@ -892,27 +907,27 @@ class LessThanOrEqualToComparison(_NumericComparison):
 
 
 # ======================================================================================
-# Nullable expression
+# Nullable
 
 
-class IsOrIsNotNullExpression[T: BaseExpression[object]](BooleanBaseExpression):
+class IsOrIsNotNullExpression[T](BooleanBaseExpression):
     _operator: ClassVar[str | None] = "is"
     _short_operator: ClassVar[str | None] = _operator
-    _val: T | BaseExpression[None]
+    _val: BaseExpression[T]
 
-    def __init__(self, val: T | BaseExpression[None]) -> None:
+    def __init__(self, val: BaseExpression[T]) -> None:
         super().__init__()
         self._val = val
 
     @property
-    def operands(self) -> list[BaseExpression[object] | BaseExpression[None]]:
+    def operands(self) -> list[BaseExpression[T] | BaseExpression[None]]:
         return [
             self._val if self._val.value is not None else BaseLiteralExpression(None),
             BaseLiteralExpression(None),
         ]
 
 
-class IsNullExpression[T: BaseExpression[object]](IsOrIsNotNullExpression[T]):
+class IsNullExpression[T](IsOrIsNotNullExpression[T]):
     @property
     def value(self) -> bool:
         return self._val.value is None
@@ -922,7 +937,7 @@ class IsNullExpression[T: BaseExpression[object]](IsOrIsNotNullExpression[T]):
         return self if self.value else IsNotNullExpression(self._val)
 
 
-class IsNotNullExpression[T: BaseExpression[object]](IsOrIsNotNullExpression[T]):
+class IsNotNullExpression[T](IsOrIsNotNullExpression[T]):
     @property
     def value(self) -> bool:
         return self._val.value is not None
@@ -930,28 +945,6 @@ class IsNotNullExpression[T: BaseExpression[object]](IsOrIsNotNullExpression[T])
     @property
     def evaluated_expression(self) -> BooleanBaseExpression:
         return self if self.value else IsNullExpression(self._val)
-
-
-class Nullable[T: BaseExpression[object]]:
-    val: T | BaseLiteralExpression[None]
-
-    def __init__(self, val: T | BaseExpression[None]) -> None:
-        self._val = val
-
-    @property
-    def is_null(self) -> IsNullExpression[T]:
-        return IsNullExpression(self.val)
-
-    @property
-    def is_not_null(self) -> IsNotNullExpression[T]:
-        return IsNotNullExpression(self.val)
-
-    @property
-    def not_null(self) -> T:
-        if self.is_null.value:
-            raise Exception
-        else:
-            return cast(T, self.val)
 
 
 # ======================================================================================
