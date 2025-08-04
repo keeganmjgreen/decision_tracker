@@ -421,6 +421,67 @@ class Conditional[RT](BaseExpression[RT]):
         )
 
 
+class Lookup[K, V](BaseExpression[V]):
+    _lookup_dict: dict[K, BaseExpression[V]]
+    _default: BaseExpression[V]
+    _look_up_key: BaseExpression[K]
+
+    def __init__(
+        self,
+        lookup_dict: dict[K, BaseExpression[V] | V],
+        look_up_key: BaseExpression[K] | K,
+        default: BaseExpression[V] | V,
+    ) -> None:
+        super().__init__()
+        self._lookup_dict = {
+            k: (v if isinstance(v, BaseExpression) else BaseLiteralExpression[V](v))
+            for k, v in lookup_dict.items()
+        }
+        self._look_up_key = (
+            look_up_key
+            if isinstance(look_up_key, BaseExpression)
+            else BaseLiteralExpression[K](look_up_key)
+        )
+        self._default = (
+            default
+            if isinstance(default, BaseExpression)
+            else BaseLiteralExpression[V](default)
+        )
+
+    @property
+    def operands(self) -> list[BaseExpression[bool]]:
+        return self.evaluated_expression.operands
+
+    @property
+    def value(self) -> V:
+        return (
+            {k: v for k, v in self._lookup_dict.items()}
+            .get(self._look_up_key.value, self._default)
+            .value
+        )
+
+    @property
+    def evaluated_expression(self) -> BaseExpression[K]:
+        return self._look_up_key.evaluated_expression
+
+    @property
+    @override
+    def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
+        raise Exception
+
+    @property
+    def reason(self) -> str:
+        return self.evaluated_expression.reason
+
+    @override
+    def __str__(self):
+        return (
+            (f"{self._name} := " if self._name else "")
+            + f"{self.value} because "
+            + self.evaluated_expression.reason
+        )
+
+
 # ======================================================================================
 # Numeric expressions
 

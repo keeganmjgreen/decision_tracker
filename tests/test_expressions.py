@@ -5,12 +5,14 @@ from sqlalchemy.orm import Session
 
 from expressions import (
     And,
+    BaseLiteralExpression,
     Difference,
     EqualToComparison,
     GreaterThanComparison,
     GreaterThanOrEqualToComparison,
     LessThanComparison,
     LessThanOrEqualToComparison,
+    Lookup,
     Not,
     NotEqualToComparison,
     Or,
@@ -131,6 +133,30 @@ class TestConditionalExpression:
         """Test when `result_if_true` and/or `result_if_false` are named."""
         y = NumericLiteral(a=1).if_(x=True).else_(b=2)
         assert y.value == 1
+
+
+class TestLookup:
+    def test_with_literal_values(self) -> None:
+        lookup = Lookup({1: "1", 2: "2"}, 2, "3")
+        assert lookup.value == "2"
+        # Key not found:
+        lookup = Lookup({1: "1", 2: "2"}, 3, "3")
+        assert lookup.value == "3"
+
+    def test_with_expression_values(self) -> None:
+        lookup = Lookup(
+            {1: BaseLiteralExpression("1"), 2: BaseLiteralExpression("2")},
+            2,
+            BaseLiteralExpression("3"),
+        )
+        assert lookup.value == "2"
+        # Key not found:
+        lookup = Lookup(
+            {1: BaseLiteralExpression("1"), 2: BaseLiteralExpression("2")},
+            3,
+            BaseLiteralExpression("3"),
+        )
+        assert lookup.value == "3"
 
 
 def test_numeric_expression() -> None:
