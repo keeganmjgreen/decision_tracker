@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from schema import EvaluatedExpressionRecord
 from utils import get_exactly_one
 
+# ======================================================================================
+# Generic Expression
+
 
 class Expression[T]:
     value: T
@@ -86,6 +89,10 @@ class Expression[T]:
         with Session(db_engine) as session:
             session.add(self.evaluated_expression_record)  # Also adds children.
             session.commit()
+
+
+# ======================================================================================
+# Boolean Expression
 
 
 class BooleanExpression(Expression[bool]):
@@ -272,6 +279,33 @@ class Or(BooleanExpression):
         )
 
 
+def _handle_boolean_expressions(
+    unnamed_expressions: tuple[BooleanExpression, ...],
+    named_expressions: dict[str, BooleanExpression | bool],
+    allow_multiple_input: bool = True,
+    multiple_output: bool = True,
+) -> BooleanExpression | list[BooleanExpression]:
+    expressions = list(unnamed_expressions) + [
+        (e if isinstance(e, BooleanExpression) else BooleanExpression(e)).with_name(n)
+        for n, e in named_expressions.items()
+    ]
+    if len(expressions) == 0:
+        raise Exception
+    elif len(expressions) > 1 and not allow_multiple_input:
+        raise Exception
+    if not multiple_output:
+        if len(expressions) > 1:
+            return And(*expressions)
+        else:
+            return get_exactly_one(expressions)
+    else:
+        return expressions
+
+
+# ======================================================================================
+# Conditional Expression
+
+
 class IncompleteConditional:
     _result_if_true: Expression[Any] | Any
     _condition: BooleanExpression
@@ -337,24 +371,4 @@ class Conditional(Expression[Any]):
         )
 
 
-def _handle_boolean_expressions(
-    unnamed_expressions: tuple[BooleanExpression, ...],
-    named_expressions: dict[str, BooleanExpression | bool],
-    allow_multiple_input: bool = True,
-    multiple_output: bool = True,
-) -> BooleanExpression | list[BooleanExpression]:
-    expressions = list(unnamed_expressions) + [
-        (e if isinstance(e, BooleanExpression) else BooleanExpression(e)).with_name(n)
-        for n, e in named_expressions.items()
-    ]
-    if len(expressions) == 0:
-        raise Exception
-    elif len(expressions) > 1 and not allow_multiple_input:
-        raise Exception
-    if not multiple_output:
-        if len(expressions) > 1:
-            return And(*expressions)
-        else:
-            return get_exactly_one(expressions)
-    else:
-        return expressions
+# ======================================================================================
