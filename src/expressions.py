@@ -203,7 +203,7 @@ class Not(BooleanBaseExpression):
 
     def __init__(
         self,
-        *unnamed_expressions: BaseExpression[bool],
+        *unnamed_expressions: BaseExpression[bool] | bool,
         **named_expressions: BaseExpression[bool] | bool,
     ) -> None:
         super().__init__()
@@ -239,7 +239,7 @@ class And(BooleanBaseExpression):
 
     def __init__(
         self,
-        *unnamed_expressions: BaseExpression[bool],
+        *unnamed_expressions: BaseExpression[bool] | bool,
         **named_expressions: BaseExpression[bool] | bool,
     ) -> None:
         super().__init__()
@@ -276,7 +276,7 @@ class Or(BooleanBaseExpression):
 
     def __init__(
         self,
-        *unnamed_expressions: BaseExpression[bool],
+        *unnamed_expressions: BaseExpression[bool] | bool,
         **named_expressions: BaseExpression[bool] | bool,
     ) -> None:
         super().__init__()
@@ -391,10 +391,12 @@ class IncompleteConditional[RT]:
     previous_incomplete_conditional: IncompleteConditional[RT] | None
 
     def __init__(
-        self, result_if_true: BaseExpression[RT] | RT, condition: BaseExpression[bool]
+        self,
+        result_if_true: BaseExpression[RT] | RT,
+        condition: BaseExpression[bool] | bool,
     ) -> None:
         self._result_if_true = _ensure_expression(result_if_true)
-        self._condition = condition
+        self._condition = _ensure_expression(condition)
         self.previous_incomplete_conditional = None
 
     def else_(
@@ -700,7 +702,7 @@ class Product(NumericBaseExpression):
 
     def __init__(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> None:
         super().__init__()
@@ -730,10 +732,12 @@ class Quotient(NumericBaseExpression):
     _dividend: BaseExpression[N]
     _divisor: BaseExpression[N]
 
-    def __init__(self, dividend: BaseExpression[N], divisor: BaseExpression[N]) -> None:
+    def __init__(
+        self, dividend: BaseExpression[N] | N, divisor: BaseExpression[N] | N
+    ) -> None:
         super().__init__()
-        self._dividend = dividend
-        self._divisor = divisor
+        self._dividend = _ensure_expression(dividend)
+        self._divisor = _ensure_expression(divisor)
 
     @property
     def operands(self) -> list[BaseExpression[N]]:
@@ -751,7 +755,7 @@ class Sum(NumericBaseExpression):
 
     def __init__(
         self,
-        *unnamed_expressions: BaseExpression[N],
+        *unnamed_expressions: BaseExpression[N] | N,
         **named_expressions: BaseExpression[N] | N,
     ) -> None:
         super().__init__()
@@ -778,11 +782,11 @@ class Difference(NumericBaseExpression):
     _subtrahend: BaseExpression[N]
 
     def __init__(
-        self, minuend: BaseExpression[N], subtrahend: BaseExpression[N]
+        self, minuend: BaseExpression[N] | N, subtrahend: BaseExpression[N] | N
     ) -> None:
         super().__init__()
-        self._minuend = minuend
-        self._subtrahend = subtrahend
+        self._minuend = _ensure_expression(minuend)
+        self._subtrahend = _ensure_expression(subtrahend)
 
     @property
     def operands(self) -> list[BaseExpression[N]]:
@@ -797,10 +801,10 @@ class _NumericComparison(BooleanBaseExpression):
     _lhs: BaseExpression[N]
     _rhs: BaseExpression[N]
 
-    def __init__(self, lhs: BaseExpression[N], rhs: BaseExpression[N]) -> None:
+    def __init__(self, lhs: BaseExpression[N] | N, rhs: BaseExpression[N] | N) -> None:
         super().__init__()
-        self._lhs = lhs
-        self._rhs = rhs
+        self._lhs = _ensure_expression(lhs)
+        self._rhs = _ensure_expression(rhs)
 
     @property
     def operands(self) -> list[BaseExpression[N]]:
