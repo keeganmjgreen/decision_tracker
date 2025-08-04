@@ -910,6 +910,13 @@ class LessThanOrEqualToComparison(_NumericComparison):
 # Nullable
 
 
+class NoneExpression(BaseLiteralExpression[None]):
+    def __init__(self) -> None:
+        self._id = UUID(int=0)
+        self._name = None
+        self._literal_value = None
+
+
 class IsOrIsNotNullExpression[T](BooleanBaseExpression):
     _operator: ClassVar[str | None] = "is"
     _short_operator: ClassVar[str | None] = _operator
@@ -922,8 +929,8 @@ class IsOrIsNotNullExpression[T](BooleanBaseExpression):
     @property
     def operands(self) -> list[BaseExpression[T] | BaseExpression[None]]:
         return [
-            self._val if self._val.value is not None else BaseLiteralExpression(None),
-            BaseLiteralExpression(None),
+            self._val if self._val.value is not None else NoneExpression(),
+            NoneExpression(),
         ]
 
 
