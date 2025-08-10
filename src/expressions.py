@@ -735,14 +735,14 @@ class Product(NumericBaseExpression):
         reason_string = ""
         if isinstance(self._operands[0], Inverse):
             reason_string += f"1 {Inverse._short_operator} "  # type: ignore
-        reason_string += f"{self._operands[0].reason}"
+        reason_string += f"({self._operands[0].reason})"
         for operand in self._operands[1:]:
             operator = (
                 Inverse._short_operator  # type: ignore
                 if isinstance(operand, Inverse)
                 else self._short_operator
             )
-            reason_string += f" {operator} {operand.reason}"
+            reason_string += f" {operator} ({operand.reason})"
         return reason_string
 
 
@@ -769,7 +769,7 @@ class Inverse(NumericBaseExpression):
 
     @property
     def reason(self) -> str:
-        return f" {self._short_operator} {self._operand.reason}"
+        return f"1 {self._short_operator} ({self._operand.reason})"
 
 
 class Sum(NumericBaseExpression):
@@ -803,14 +803,14 @@ class Sum(NumericBaseExpression):
         reason_string = ""
         if isinstance(self._operands[0], Negative):
             reason_string += f"{Negative._short_operator} "  # type: ignore
-        reason_string += f"{self._operands[0].reason}"
+        reason_string += f"({self._operands[0].reason})"
         for operand in self._operands[1:]:
             operator = (
                 Negative._short_operator  # type: ignore
                 if isinstance(operand, Negative)
                 else self._short_operator
             )
-            reason_string += f" {operator} {operand.reason}"
+            reason_string += f" {operator} ({operand.reason})"
         return reason_string
 
 
@@ -837,7 +837,7 @@ class Negative(NumericBaseExpression):
 
     @property
     def reason(self) -> str:
-        return f" {self._short_operator} {self._operand.reason}"
+        return f"{self._short_operator}({self._operand.reason})"
 
 
 class _NumericComparison(BooleanBaseExpression):
