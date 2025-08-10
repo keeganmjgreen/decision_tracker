@@ -205,6 +205,20 @@ class TestProductExpression:
             b=Product(b1=3, b2=4),
         ) != Product(a1=1, a2=2, b1=3, b2=4)
 
+    def test_with_an_inverse_expression_in_the_beginning(self) -> None:
+        assert (
+            str(Product(a=Inverse(a1=4), b=2)) == "0.5 because 1 / (a1 := 4) * (b := 2)"
+        )
+
+    def test_with_an_inverse_expression_in_the_middle_or_end(self) -> None:
+        assert str(Product(a=4, b=Inverse(b1=2))) == "2.0 because (a := 4) / (b1 := 2)"
+
+    def test_with_a_negative_expression_in_the_beginning(self) -> None:
+        assert str(Product(a=Negative(a1=4), b=2)) == "-8 because -(a1 := 4) * (b := 2)"
+
+    def test_with_a_negative_expression_in_the_middle_or_end(self) -> None:
+        assert str(Product(a=4, b=Negative(b1=2))) == "-8 because (a := 4) * -(b1 := 2)"
+
 
 def test_inverse_expression() -> None:
     y = Inverse(NumericLiteral(a=4))
@@ -234,6 +248,18 @@ class TestSumExpression:
             b=Sum(b1=True, b2=True),
         ) != Sum(a1=True, a2=True, b1=True, b2=True)
 
+    def test_with_a_negative_expression_in_the_beginning(self) -> None:
+        assert str(Sum(a=Negative(a1=4), b=2)) == "-2 because -(a1 := 4) + (b := 2)"
+
+    def test_with_a_negative_expression_in_the_middle_or_end(self) -> None:
+        assert str(Sum(a=4, b=Negative(b1=2))) == "2 because (a := 4) - (b1 := 2)"
+
+    def test_with_an_inverse_expression_in_the_beginning(self) -> None:
+        assert str(Sum(a=Inverse(a1=4), b=2)) == "2.25 because 1 / (a1 := 4) + (b := 2)"
+
+    def test_with_an_inverse_expression_in_the_middle_or_end(self) -> None:
+        assert str(Sum(a=4, b=Inverse(b1=2))) == "4.5 because (a := 4) + 1 / (b1 := 2)"
+
 
 def test_negative_expression() -> None:
     y = Negative(NumericLiteral(a=4))
@@ -242,6 +268,10 @@ def test_negative_expression() -> None:
     assert type(Negative(NumericLiteral(a=4.0)).value) is float
     assert str(y) == "-4 because -(a := 4)"
     assert str(y.with_name("y")) == "y := -4 because -(a := 4)"
+
+
+def test_negative_of_inverse() -> None:
+    assert str(Negative(a=Inverse(a1=4))) == "-0.25 because -(1 / (a1 := 4))"
 
 
 class TestEqualToComparison:

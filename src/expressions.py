@@ -733,16 +733,21 @@ class Product(NumericBaseExpression):
     @property
     def reason(self) -> str:
         reason_string = ""
-        if isinstance(self._operands[0], Inverse):
-            reason_string += f"1 {Inverse._short_operator} "  # type: ignore
-        reason_string += f"({self._operands[0].reason})"
+        if isinstance(self._operands[0], Inverse) or isinstance(
+            self._operands[0], Negative
+        ):
+            reason_string += f"{self._operands[0].reason}"
+        else:
+            reason_string += f"({self._operands[0].reason})"
         for operand in self._operands[1:]:
-            operator = (
-                Inverse._short_operator  # type: ignore
-                if isinstance(operand, Inverse)
-                else self._short_operator
-            )
-            reason_string += f" {operator} ({operand.reason})"
+            if isinstance(operand, Inverse):
+                reason_string += (
+                    f" {Inverse._short_operator} ({operand._operand.reason})"  # type: ignore
+                )
+            elif isinstance(operand, Negative):
+                reason_string += f" {self._short_operator} {operand.reason}"
+            else:
+                reason_string += f" {self._short_operator} ({operand.reason})"
         return reason_string
 
 
@@ -801,16 +806,21 @@ class Sum(NumericBaseExpression):
     @property
     def reason(self) -> str:
         reason_string = ""
-        if isinstance(self._operands[0], Negative):
-            reason_string += f"{Negative._short_operator} "  # type: ignore
-        reason_string += f"({self._operands[0].reason})"
+        if isinstance(self._operands[0], Negative) or isinstance(
+            self._operands[0], Inverse
+        ):
+            reason_string += self._operands[0].reason
+        else:
+            reason_string += f"({self._operands[0].reason})"
         for operand in self._operands[1:]:
-            operator = (
-                Negative._short_operator  # type: ignore
-                if isinstance(operand, Negative)
-                else self._short_operator
-            )
-            reason_string += f" {operator} ({operand.reason})"
+            if isinstance(operand, Negative):
+                reason_string += (
+                    f" {Negative._short_operator} ({operand._operand.reason})"  # type: ignore
+                )
+            elif isinstance(operand, Inverse):
+                reason_string += f" {self._short_operator} {operand.reason}"
+            else:
+                reason_string += f" {self._short_operator} ({operand.reason})"
         return reason_string
 
 
