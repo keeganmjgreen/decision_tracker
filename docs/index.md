@@ -192,15 +192,85 @@ DecisionTracker supports alternate syntaxes for convenience or to suit user pref
 
 ### If-elif-else blocks
 
-TODO
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+if a:
+    return a1
+elif b
+    return b1
+else:
+    return c
+```
+
+```python title="DecisionTracker Python syntax"
+return If(a).then_(a1).elif_(b).then_(b1).else_(c)
+```
+
+</div>
 
 ### Ternary operators
 
-TODO
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+a if b else c
+```
+
+```python title="DecisionTracker Python syntax"
+Int(a).if_(b).else_(c)
+```
+
+</div>
 
 ### Dict lookups
 
-TODO
+Without default:
+
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+{
+    "a": a,
+    "b": b,
+}[x]
+```
+
+```python title="DecisionTracker Python syntax"
+Lookup(
+    {
+        "a": a,
+        "b": b,
+    },
+    x,
+)
+```
+
+</div>
+
+With default:
+
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+{
+    "a": a,
+    "b": b,
+}.get(x, c)
+```
+
+```python title="DecisionTracker Python syntax"
+Lookup(
+    {
+        "a": a,
+        "b": b,
+    },
+    x,
+    c,
+)
+```
+
+</div>
 
 ## Migrating existing programs
 
