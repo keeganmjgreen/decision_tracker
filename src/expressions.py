@@ -557,19 +557,15 @@ class Conditional[RT](BaseExpression[RT]):
 
 class Lookup[K, V](BaseExpression[V]):
     _lookup_dict: dict[K, BaseExpression[V]]
-    _default: BaseExpression[V]
     _look_up_key: BaseExpression[K]
 
     def __init__(
         self,
         lookup_dict: dict[K, BaseExpression[V] | V],
         look_up_key: BaseExpression[K] | K,
-        default: BaseExpression[V] | V,
     ) -> None:
-        super().__init__()
         self._lookup_dict = {k: _ensure_expression(v) for k, v in lookup_dict.items()}
         self._look_up_key = _ensure_expression(look_up_key)
-        self._default = _ensure_expression(default)
 
     @property
     def operands(self) -> list[BaseExpression[bool]]:
@@ -577,11 +573,7 @@ class Lookup[K, V](BaseExpression[V]):
 
     @property
     def value(self) -> V:
-        return (
-            {k: v for k, v in self._lookup_dict.items()}
-            .get(self._look_up_key.value, self._default)
-            .value
-        )
+        return self._lookup_dict[self._look_up_key.value].value
 
     @property
     def evaluated_expression(self) -> BaseExpression[K]:
@@ -603,6 +595,23 @@ class Lookup[K, V](BaseExpression[V]):
             + f"{self.value} because "
             + self.evaluated_expression.reason
         )
+
+
+class UncertainLookup[K, V, D](Lookup[K, V]):
+    _default: BaseExpression[D]
+
+    def __init__(
+        self,
+        lookup_dict: dict[K, BaseExpression[V] | V],
+        look_up_key: BaseExpression[K] | K,
+        default: BaseExpression[D] | D = None,
+    ) -> None:
+        super().__init__(lookup_dict, look_up_key)
+        self._default = _ensure_expression(default)
+
+    @property
+    def value(self) -> V | D:
+        return self._lookup_dict.get(self._look_up_key.value, self._default).value
 
 
 # ======================================================================================

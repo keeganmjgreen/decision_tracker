@@ -12,13 +12,13 @@ from expressions import (
     Inverse,
     LessThanComparison,
     LessThanOrEqualToComparison,
-    Lookup,
     Negative,
     Not,
     NotEqualToComparison,
     Or,
     Product,
     Sum,
+    UncertainLookup,
 )
 from expressions import (
     BooleanLiteralExpression as BooleanLiteral,
@@ -135,23 +135,23 @@ class TestConditionalExpression:
         assert y.value == 1
 
 
-class TestLookup:
+class TestUncertainLookup:
     def test_with_literal_values(self) -> None:
-        lookup = Lookup({1: "1", 2: "2"}, 2, "3")
+        lookup = UncertainLookup({1: "1", 2: "2"}, 2, "3")
         assert lookup.value == "2"
         # Key not found:
-        lookup = Lookup({1: "1", 2: "2"}, 3, "3")
+        lookup = UncertainLookup({1: "1", 2: "2"}, 3, "3")
         assert lookup.value == "3"
 
     def test_with_expression_values(self) -> None:
-        lookup = Lookup(
+        lookup = UncertainLookup(
             {1: BaseLiteralExpression("1"), 2: BaseLiteralExpression("2")},
             2,
             BaseLiteralExpression("3"),
         )
         assert lookup.value == "2"
         # Key not found:
-        lookup = Lookup(
+        lookup = UncertainLookup(
             {1: BaseLiteralExpression("1"), 2: BaseLiteralExpression("2")},
             3,
             BaseLiteralExpression("3"),
