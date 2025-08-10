@@ -6,18 +6,18 @@ from sqlalchemy.orm import Session
 from expressions import (
     And,
     BaseLiteralExpression,
-    Difference,
     EqualToComparison,
     GreaterThanComparison,
     GreaterThanOrEqualToComparison,
+    Inverse,
     LessThanComparison,
     LessThanOrEqualToComparison,
     Lookup,
+    Negative,
     Not,
     NotEqualToComparison,
     Or,
     Product,
-    Quotient,
     Sum,
 )
 from expressions import (
@@ -161,13 +161,11 @@ class TestLookup:
 
 def test_numeric_expression() -> None:
     assert NumericLiteral(a=4).times(b=2.0) == Product(a=4, b=2.0)
-    assert NumericLiteral(a=4).divided_by(b=2.0) == Quotient(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
+    assert NumericLiteral(a=4).divided_by(b=2.0) == Product(
+        NumericLiteral(a=4), Inverse(b=2.0)
     )
     assert NumericLiteral(a=4).plus(b=2.0) == Sum(a=4, b=2.0)
-    assert NumericLiteral(a=4).minus(b=2.0) == Difference(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
-    )
+    assert NumericLiteral(a=4).minus(b=2.0) == Sum(NumericLiteral(a=4), Negative(b=2.0))
     assert NumericLiteral(a=4).eq(b=2.0) == EqualToComparison(
         NumericLiteral(a=4), NumericLiteral(b=2.0)
     )
@@ -208,13 +206,13 @@ class TestProductExpression:
         ) != Product(a1=1, a2=2, b1=3, b2=4)
 
 
-def test_quotient_expression() -> None:
-    y = Quotient(NumericLiteral(a=4), NumericLiteral(b=2))
-    assert y.value == 2
+def test_inverse_expression() -> None:
+    y = Inverse(NumericLiteral(a=4))
+    assert y.value == 0.25
     assert type(y.value) is float
-    assert type(Quotient(NumericLiteral(a=4), NumericLiteral(b=2.0)).value) is float
-    assert str(y) == "2.0 because (a := 4) / (b := 2)"
-    assert str(y.with_name("y")) == "y := 2.0 because (a := 4) / (b := 2)"
+    assert type(Inverse(NumericLiteral(a=4.0)).value) is float
+    assert str(y) == "0.25 because 1 / (a := 4)"
+    assert str(y.with_name("y")) == "y := 0.25 because 1 / (a := 4)"
 
 
 class TestSumExpression:
@@ -237,13 +235,13 @@ class TestSumExpression:
         ) != Sum(a1=True, a2=True, b1=True, b2=True)
 
 
-def test_difference_expression() -> None:
-    y = Difference(NumericLiteral(a=4), NumericLiteral(b=2))
-    assert y.value == 2
+def test_negative_expression() -> None:
+    y = Negative(NumericLiteral(a=4))
+    assert y.value == -4
     assert type(y.value) is int
-    assert type(Difference(NumericLiteral(a=4), NumericLiteral(b=2.0)).value) is float
-    assert str(y) == "2 because (a := 4) - (b := 2)"
-    assert str(y.with_name("y")) == "y := 2 because (a := 4) - (b := 2)"
+    assert type(Negative(NumericLiteral(a=4.0)).value) is float
+    assert str(y) == "-4 because -(a := 4)"
+    assert str(y.with_name("y")) == "y := -4 because -(a := 4)"
 
 
 class TestEqualToComparison:
