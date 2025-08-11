@@ -6,7 +6,9 @@ Using monadic patterns, the library provides a *DecisionTracker syntax* for writ
 
 In addition, the tree can be simplified to represent only the logic and math of the code path taken to arrive at the tree's final value. This simplified tree can be flattened to a list of Evaluated Expressions, which can be stored in a dedicated relational database table. This allows program executions and outputs to be explained, traced, and audited at a level of thoroughness and ease which traditional logging cannot provide.
 
-Furthermore, the library offers the DecisionTracker Grafana panel, allowing the simplified tree to be reconstructed from the Evaluated Expressions stored in the database, and then viewed interactively.
+Furthermore, the library offers the [DecisionTracker Grafana panel](https://github.com/keeganmjgreen/keegangreen-decisiontracker-panel), allowing the simplified tree to be reconstructed from the Evaluated Expressions stored in the database, and then viewed interactively.
+
+![](high_level_diagram.drawio.svg)
 
 ## DecisionTracker syntax
 
@@ -33,7 +35,7 @@ Numeric(a=0).plus(b=1).minus(c=2).times(d=3).divided_by(e=4)
 
     Just as in regular Python, use of `int`s and `float`s are interchangeable in the `Numeric` class. Performing a binary operation (e.g., addition) between two `int`s returns an `int`, performing a binary operation between two `float`s returns a `float`, and performing a binary operation between an `int` and a `float` returns a `float`. Division is the exception, which always returns a `float`.
 
-DecisionTracker expressions are evaluated from left to right. If we wanted to change the order of operations, we would instead write:
+DecisionTracker syntax is evaluated from left to right. If we wanted to change the order of operations, we would instead write:
 
 <div class="grid" markdown>
 
@@ -117,7 +119,7 @@ Bool(x=True).or_(y=True).and_(Not(z=False))
 
 </div>
 
-Again, DecisionTracker expressions are evaluated from left to right. If we wanted to change the order of operations, we would instead write:
+Again, DecisionTracker syntax is evaluated from left to right. If we wanted to change the order of operations, we would instead write:
 
 <div class="grid" markdown>
 
@@ -192,15 +194,150 @@ DecisionTracker supports alternate syntaxes for convenience or to suit user pref
 
 ### If-elif-else blocks
 
-TODO
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+if a:
+    return a1
+elif b
+    return b1
+else:
+    return c1
+```
+
+```python title="DecisionTracker Python syntax"
+return If(a).then(
+    a1
+).elif_(b).then(
+    b1
+).else_(
+    c1
+)
+```
+
+</div>
+
+Obviously, you can have as many `.elif_(...).then(...)` cases as you wish (including none). However, unlike in regular Python syntax, a final `.else_(...)` is always required.
 
 ### Ternary operators
 
-TODO
+Ternary operator expressions can be written as follows:
+
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+a if b else c
+```
+
+```python title="DecisionTracker Python syntax"
+Int(a).if_(b).else_(c)
+```
+
+</div>
+
+Ternary operator expressions can be chained, but like this:
+
+<div class="grid" markdown>
+
+```python
+a if b else c if d else e
+```
+
+```python
+Int(a).if_(b).else_(c.if_(d).else_(e))
+```
+
+</div>
+
+Not like the following (which checks `d` *before* `b` and is likely not what is intended); simply keep in mind that DecisionTracker syntax is evaluated from left to right.
+
+<div class="grid" markdown>
+
+```python
+(a if b else c) if d else e
+```
+
+```python
+Int(a).if_(b).else_(c).if_(d).else_(e)
+```
+
+</div>
 
 ### Dict lookups
 
-TODO
+Dictionary lookups can be written as follows:
+
+=== "Without a default"
+
+    <div class="grid" markdown>
+
+    ```python title="Regular Python syntax"
+    {
+        "a": a,
+        "b": b,
+    }[x]
+    ```
+
+    ```python title="DecisionTracker Python syntax"
+    Lookup(
+        {
+            "a": a,
+            "b": b,
+        },
+        x,
+    )
+    ```
+
+    </div>
+
+=== "With a default"
+
+    <div class="grid" markdown>
+
+    ```python title="Regular Python syntax"
+    {
+        "a": a,
+        "b": b,
+    }.get(x, c)
+    ```
+
+    ```python title="DecisionTracker Python syntax"
+    UncertainLookup(
+        {
+            "a": a,
+            "b": b,
+        },
+        x,
+        c,
+    )
+    ```
+
+    </div>
+
+=== "With a `None` default"
+
+    <div class="grid" markdown>
+
+    ```python title="Regular Python syntax"
+    {
+        "a": a,
+        "b": b,
+    }.get(x)
+    ```
+
+    ```python title="DecisionTracker Python syntax"
+    val = UncertainLookup(
+        {
+            "a": a,
+            "b": b,
+        },
+        x,
+    )
+    ```
+
+    </div>
+
+    The return value of `.get(x)` should be checked to not be `None` before being used. Similarly, `IsNotNull(val)` should be checked before using `val` --- that is, using `Numeric(val)` if its possible values are numeric, `Bool(val)` if boolean, and so on.
 
 ## Migrating existing programs
 

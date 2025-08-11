@@ -20,6 +20,7 @@
     "python.testing.unittestEnabled": false,
     "python.analysis.typeCheckingMode": "strict",
     "cSpell.words": [
+        "elif",
         "explainability",
         "sqla"
     ],
