@@ -764,8 +764,8 @@ class Product(NumericBaseExpression):
 
 
 class Inverse(NumericBaseExpression):
-    _operator: ClassVar[str | None] = "/"
-    _short_operator: ClassVar[str | None] = _operator
+    _operator: ClassVar[str | None] = "inverse"
+    _short_operator: ClassVar[str | None] = "/"
     _operand: BaseExpression[N]
 
     def __init__(
@@ -837,8 +837,8 @@ class Sum(NumericBaseExpression):
 
 
 class Negative(NumericBaseExpression):
-    _operator: ClassVar[str | None] = "-"
-    _short_operator: ClassVar[str | None] = _operator
+    _operator: ClassVar[str | None] = "negative"
+    _short_operator: ClassVar[str | None] = "-"
     _operand: BaseExpression[N]
 
     def __init__(
