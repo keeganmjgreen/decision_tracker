@@ -6,10 +6,10 @@ from copy import deepcopy
 from typing import Any, Callable, ClassVar, Self, TypeVar, cast, override
 from uuid import UUID, uuid4
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, insert
 from sqlalchemy.orm import Session
 
-from schema import EvaluatedExpressionRecord
+from schema import EvaluatedExpressionRecord, define_arbitrary_metadata_table
 from utils import get_exactly_one
 
 # ======================================================================================
@@ -62,14 +62,23 @@ class BaseExpression[T](abc.ABC):
             children=[o.evaluated_expression_record for o in self.operands],
         )
 
-    def to_db(self, db_engine: Engine) -> None:
+    def to_db(self, db_engine: Engine, metadata: dict[str, Any]) -> None:
         if self._name is None:
             raise ValueError(
                 "An expression cannot be inserted into the database without a name. "
                 "Try calling `.with_name()` first."
             )
+
+        metadata_table = define_arbitrary_metadata_table(metadata.keys())
+
         with Session(db_engine) as session:
             session.merge(self.evaluated_expression_record)  # Also adds children.
+            session.commit()
+            session.execute(
+                insert(metadata_table).values(
+                    evaluated_expression_id=self._id, **metadata
+                )
+            )
             session.commit()
 
     def with_name(self, name: str) -> Self:

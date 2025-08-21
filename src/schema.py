@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Iterable
 
-from sqlalchemy import Column, ForeignKey, Table, Text, Uuid
+from sqlalchemy import Column, ForeignKey, MetaData, Table, Text, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -55,4 +55,26 @@ class EvaluatedExpressionRecord(Base):
         secondaryjoin=(id == association_table.c.parent_id),
         back_populates="children",
         repr=False,
+    )
+
+
+def define_metadata_table(sa_metadata: MetaData, cols: list[Column[Any]]) -> Table:
+    return Table(
+        "evaluated_expression_metadata",
+        sa_metadata,
+        Column(
+            "evaluated_expression_id", Uuid(), ForeignKey("evaluated_expression.id")
+        ),
+        *cols,
+    )
+
+
+def define_arbitrary_metadata_table(metadata_keys: Iterable[str]) -> Table:
+    return Table(
+        "evaluated_expression_metadata",
+        MetaData(),
+        Column(
+            "evaluated_expression_id", Uuid(), ForeignKey("evaluated_expression.id")
+        ),
+        *[Column[Any](k) for k in metadata_keys],
     )

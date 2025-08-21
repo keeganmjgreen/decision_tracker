@@ -1,8 +1,15 @@
-from uuid import UUID
+import datetime as dt
+from typing import cast
+from uuid import UUID, uuid4
 
 import pytest
 import sqlalchemy as sqla
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Mapped,
+    Session,
+    mapped_column,
+    relationship,
+)
 
 from expressions import (
     And,
@@ -29,7 +36,11 @@ from expressions import (
 from expressions import (
     NumericLiteralExpression as NumericLiteral,
 )
-from schema import EvaluatedExpressionRecord
+from schema import (
+    Base,
+    EvaluatedExpressionRecord,
+    define_metadata_table,
+)
 from utils import get_exactly_one
 
 
@@ -431,8 +442,11 @@ class TestLessThanOrEqualToComparison:
 
 class TestToDb:
     def test_inserting_expression_into_db(self, db_engine: sqla.Engine) -> None:
+        md_table = define_metadata_table(Base.metadata, cols=[])
+        Base.metadata.create_all(db_engine)
+
         y = Not(x=True).with_name("y")
-        y.to_db(db_engine)
+        y.to_db(db_engine, metadata=dict())
         with Session(db_engine) as session:
             records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
             record_1, record_2 = records
@@ -446,12 +460,57 @@ class TestToDb:
             assert record_2.value is True
             assert record_2.operator is None
 
+        Base.metadata.remove(md_table)
+        Base.metadata.drop_all(db_engine, tables=[md_table])
+
+    def test_inserting_metadata_into_db(self, db_engine: sqla.Engine) -> None:
+        class EvaluatedExpressionMetadataRecord(Base):
+            __tablename__ = "evaluated_expression_metadata"
+
+            evaluated_expression_id: Mapped[UUID] = mapped_column(
+                sqla.Uuid, sqla.ForeignKey("evaluated_expression.id"), primary_key=True
+            )
+            timestamp: Mapped[dt.datetime] = mapped_column(
+                sqla.TIMESTAMP(True), primary_key=True
+            )
+            service_id: Mapped[UUID] = mapped_column(sqla.Uuid, primary_key=True)
+            customer_id: Mapped[UUID] = mapped_column(sqla.Uuid, primary_key=True)
+
+            evaluated_expression: Mapped[EvaluatedExpressionRecord] = relationship(
+                repr=False
+            )
+
+        Base.metadata.create_all(db_engine)
+
+        y = Not(x=True).with_name("y")
+        metadata = dict(
+            timestamp=dt.datetime.now(dt.UTC),
+            service_id=uuid4(),
+            customer_id=uuid4(),
+        )
+        y.to_db(db_engine, metadata)
+        with Session(db_engine) as session:
+            (metadata_record,) = session.scalars(
+                sqla.select(EvaluatedExpressionMetadataRecord)
+            ).all()
+            assert metadata_record.evaluated_expression.name == "y"
+            assert metadata_record.timestamp == metadata["timestamp"]
+            assert metadata_record.service_id == metadata["service_id"]
+            assert metadata_record.customer_id == metadata["customer_id"]
+
+        md_table = cast(sqla.Table, EvaluatedExpressionMetadataRecord.__table__)
+        Base.metadata.remove(md_table)
+        Base.metadata.drop_all(db_engine, tables=[md_table])
+
     def test_many_to_many_relationship(self, db_engine: sqla.Engine) -> None:
+        md_table = define_metadata_table(Base.metadata, cols=[])
+        Base.metadata.create_all(db_engine)
+
         x = NumericLiteral(a=4).times(b=2)
         y = Negative(x).with_name("y")
         z = Inverse(x).with_name("z")
-        y.to_db(db_engine)
-        z.to_db(db_engine)
+        y.to_db(db_engine, metadata=dict())
+        z.to_db(db_engine, metadata=dict())
         with Session(db_engine) as session:
             records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
             r1, r2, r3, r4, r5 = records
@@ -463,9 +522,12 @@ class TestToDb:
             assert r4.name == "b"
             assert r5.name == "z"
 
+        Base.metadata.remove(md_table)
+        Base.metadata.drop_all(db_engine, tables=[md_table])
+
     def test_raising_if_root_expression_is_unnamed(
         self, db_engine: sqla.Engine
     ) -> None:
         x = Not(x=True)
         with pytest.raises(ValueError):
-            x.to_db(db_engine)
+            x.to_db(db_engine, metadata=dict())
