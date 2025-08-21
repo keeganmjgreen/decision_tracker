@@ -509,6 +509,9 @@ class Elif[RT](If):
 
 
 class Conditional[RT](BaseExpression[RT]):
+    _operator: ClassVar[str | None] = None
+    _short_operator: ClassVar[str | None] = _operator
+
     _result_if_true: BaseExpression[RT]
     _condition: BaseExpression[bool]
     _result_if_false: BaseExpression[RT]
@@ -556,6 +559,18 @@ class Conditional[RT](BaseExpression[RT]):
             + f"{self.value} because "
             + self.evaluated_expression.reason
         )
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Conditional):
+            other = cast(Conditional[RT], other)
+            return (
+                self._result_if_true == other._result_if_true
+                and self._condition == other._condition
+                and self._result_if_false == other._result_if_false
+                and BaseExpression.__eq__(self, other)  # type: ignore
+            )
+        else:
+            return False
 
 
 class Lookup[K, V](BaseExpression[V]):

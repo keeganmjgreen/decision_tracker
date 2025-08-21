@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 from expressions import (
     And,
     BaseLiteralExpression,
+    Conditional,
     EqualToComparison,
     GreaterThanComparison,
     GreaterThanOrEqualToComparison,
+    If,
     Inverse,
     LessThanComparison,
     LessThanOrEqualToComparison,
@@ -118,22 +120,81 @@ class TestOrExpression:
         ) != Or(a1=True, a2=True, b1=True, b2=True)
 
 
+def test_if_elif_else() -> None:
+    assert If(a=True).then(1).else_(2) == Conditional(
+        result_if_true=1,
+        condition=BooleanLiteral(a=True),
+        result_if_false=2,
+    )
+    assert If(a=True).then(1).elif_(b=True).then(2).elif_(c=True).then(3).else_(
+        4
+    ) == Conditional(
+        result_if_true=1,
+        condition=BooleanLiteral(a=True),
+        result_if_false=Conditional(
+            result_if_true=2,
+            condition=BooleanLiteral(b=True),
+            result_if_false=Conditional(
+                result_if_true=3,
+                condition=BooleanLiteral(c=True),
+                result_if_false=4,
+            ),
+        ),
+    )
+
+
+def test_ternary_operator_expression() -> None:
+    assert NumericLiteral(1).if_(x=True).else_(2) == Conditional(
+        result_if_true=1,
+        condition=BooleanLiteral(x=True),
+        result_if_false=2,
+    )
+    assert NumericLiteral(1).if_(x=True).else_(2).if_(y=True).else_(3) == Conditional(
+        result_if_true=Conditional(
+            result_if_true=1,
+            condition=BooleanLiteral(x=True),
+            result_if_false=2,
+        ),
+        condition=BooleanLiteral(y=True),
+        result_if_false=3,
+    )
+    assert NumericLiteral(1).if_(x=True).else_(
+        NumericLiteral(2).if_(y=True).else_(3)
+    ) == Conditional(
+        result_if_true=1,
+        condition=BooleanLiteral(x=True),
+        result_if_false=Conditional(
+            result_if_true=2,
+            condition=BooleanLiteral(y=True),
+            result_if_false=3,
+        ),
+    )
+
+
 class TestConditionalExpression:
     def test_when_true(self) -> None:
-        y = NumericLiteral(1).if_(x=True).else_(2)
+        y = Conditional(
+            result_if_true=1, condition=BooleanLiteral(x=True), result_if_false=2
+        )
         assert y.value == 1
         assert str(y) == "1 because x := True"
         assert str(y.with_name("y")) == "y := 1 because x := True"
 
     def test_when_false(self) -> None:
-        y = NumericLiteral(1).if_(x=False).else_(2)
+        y = Conditional(
+            result_if_true=1, condition=BooleanLiteral(x=False), result_if_false=2
+        )
         assert y.value == 2
         assert str(y) == "2 because x := False"
         assert str(y.with_name("y")) == "y := 2 because x := False"
 
     def test_with_named_results(self) -> None:
         """Test when `result_if_true` and/or `result_if_false` are named."""
-        y = NumericLiteral(a=1).if_(x=True).else_(b=2)
+        y = Conditional(
+            result_if_true=NumericLiteral(a=1),
+            condition=BooleanLiteral(x=True),
+            result_if_false=NumericLiteral(b=2),
+        )
         assert y.value == 1
 
 
