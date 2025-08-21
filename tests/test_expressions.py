@@ -28,6 +28,7 @@ from expressions import (
     NumericLiteralExpression as NumericLiteral,
 )
 from schema import EvaluatedExpressionRecord
+from utils import get_exactly_one
 
 
 class TestBooleanExpression:
@@ -375,14 +376,31 @@ class TestToDb:
             records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
             record_1, record_2 = records
             assert isinstance(record_1.id, UUID)
-            assert record_1.parent_id is None
+            assert len(record_1.parents) == 0
             assert record_1.name == "y"
             assert record_1.value is False
             assert record_1.operator == "not"
-            assert record_2.parent_id == record_1.id
+            assert get_exactly_one(record_2.parents).id == record_1.id
             assert record_2.name == "x"
             assert record_2.value is True
             assert record_2.operator is None
+
+    def test_many_to_many_relationship(self, db_engine: sqla.Engine) -> None:
+        x = NumericLiteral(a=4).times(b=2)
+        y = Negative(x).with_name("y")
+        z = Inverse(x).with_name("z")
+        y.to_db(db_engine)
+        z.to_db(db_engine)
+        with Session(db_engine) as session:
+            records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
+            r1, r2, r3, r4, r5 = records
+            assert r1.name == "y"
+            assert r2.id == x._id  # type: ignore
+            assert [c.name for c in r2.children] == ["a", "b"]
+            assert [p.name for p in r2.parents] == ["y", "z"]
+            assert r3.name == "a"
+            assert r4.name == "b"
+            assert r5.name == "z"
 
     def test_raising_if_root_expression_is_unnamed(
         self, db_engine: sqla.Engine

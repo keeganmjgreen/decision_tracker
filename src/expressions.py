@@ -55,7 +55,7 @@ class BaseExpression[T](abc.ABC):
     @property
     def evaluated_expression_record(self) -> EvaluatedExpressionRecord:
         return EvaluatedExpressionRecord(
-            id=self._id,  # type: ignore
+            id=self._id,
             name=self._name,
             value=self.value,
             operator=self._operator,
@@ -69,7 +69,7 @@ class BaseExpression[T](abc.ABC):
                 "Try calling `.with_name()` first."
             )
         with Session(db_engine) as session:
-            session.add(self.evaluated_expression_record)  # Also adds children.
+            session.merge(self.evaluated_expression_record)  # Also adds children.
             session.commit()
 
     def with_name(self, name: str) -> Self:
