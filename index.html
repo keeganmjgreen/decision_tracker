@@ -1,0 +1,819 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>DecisionTracker</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#decisiontracker" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="DecisionTracker" class="md-header__button md-logo" aria-label="DecisionTracker" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DecisionTracker
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="DecisionTracker" class="md-nav__button md-logo" aria-label="DecisionTracker" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    DecisionTracker
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#decisiontracker-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      DecisionTracker syntax
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DecisionTracker syntax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#numeric-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Numeric expressions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparisons
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bool-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bool expressions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-elif-else-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      If-elif-else blocks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ternary-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ternary operators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dict-lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dict lookups
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migrating-existing-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migrating existing programs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storing-evaluated-expressions-in-a-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storing Evaluated Expressions in a database
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-viewing-using-the-grafana-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive viewing using the Grafana panel
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#decisiontracker-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      DecisionTracker syntax
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DecisionTracker syntax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#numeric-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Numeric expressions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparisons
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bool-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bool expressions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-elif-else-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      If-elif-else blocks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ternary-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ternary operators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dict-lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dict lookups
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migrating-existing-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migrating existing programs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storing-evaluated-expressions-in-a-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storing Evaluated Expressions in a database
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-viewing-using-the-grafana-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive viewing using the Grafana panel
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="decisiontracker">DecisionTracker</h1>
+<p>DecisionTracker is a Python library for writing explainable, traceable, and auditable Python programs.</p>
+<p>Using monadic patterns, the library provides a <em>DecisionTracker syntax</em> for writing logic and math operations and control flow. Through this syntax, it allows one or more trees of expressions to be built up under the hood. A tree represents some code paths, math, and logic of the program. Each tree can be evaluated to a final value, equivalent to obtaining one of the outputs of the program if it had been written using vanilla Python syntax instead of DecisionTracker syntax.</p>
+<p>In addition, the tree can be simplified to represent only the logic and math of the code path taken to arrive at the tree&rsquo;s final value. This simplified tree can be flattened to a list of Evaluated Expressions, which can be stored in a dedicated relational database table. This allows program executions and outputs to be explained, traced, and audited at a level of thoroughness and ease which traditional logging cannot provide.</p>
+<p>Furthermore, the library offers the <a href="https://github.com/keeganmjgreen/keegangreen-decisiontracker-panel">DecisionTracker Grafana panel</a>, allowing the simplified tree to be reconstructed from the Evaluated Expressions stored in the database, and then viewed interactively.</p>
+<p><img alt="" src="high_level_diagram.drawio.svg" /></p>
+<h2 id="decisiontracker-syntax">DecisionTracker syntax</h2>
+<p>DecisionTracker syntax is a re-implementation of a subset of Python syntax, in Python syntax, in order to support DecisionTracker&rsquo;s features. The subset of Python syntax that is supported represents the kind of code expressions that can be stored in a database and for which DecisionTracker offers explainability and traceability.</p>
+<h3 id="numeric-expressions">Numeric expressions</h3>
+<p>In DecisionTracker syntax, numeric expressions are based on the <code>Numeric</code> class:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="n">e</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plus</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">minus</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">times</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">divided_by</span><span class="p">(</span><span class="n">e</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Just as in regular Python, use of <code>int</code>s and <code>float</code>s are interchangeable in the <code>Numeric</code> class. Performing a binary operation (e.g., addition) between two <code>int</code>s returns an <code>int</code>, performing a binary operation between two <code>float</code>s returns a <code>float</code>, and performing a binary operation between an <code>int</code> and a <code>float</code> returns a <code>float</code>. Division is the exception, which always returns a <code>float</code>.</p>
+</div>
+<p>DecisionTracker syntax is evaluated from left to right. If we wanted to change the order of operations, we would instead write:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="n">e</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">Int</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plus</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">minus</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">times</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">divided_by</span><span class="p">(</span><span class="n">e</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>A numeric expression can be converted to Evaluated Expressions, which can be seen in its string representation:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Int</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plus</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">minus</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">times</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">divided_by</span><span class="p">(</span><span class="n">e</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="o">-</span><span class="mf">0.75</span> <span class="n">because</span> <span class="p">((((</span><span class="n">a</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">:=</span> <span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">c</span> <span class="o">:=</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">d</span> <span class="o">:=</span> <span class="mi">3</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">e</span> <span class="o">:=</span> <span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Nested addition operations, or nested multiplication operations, will be flattened, while maintaining the order of the operands and the final value.</p>
+</div>
+<h3 id="comparisons">Comparisons</h3>
+<p>Comparisons of numeric expressions can be written as follows. Comparisons return <code>Bool</code>s.</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">a</span> <span class="o">==</span> <span class="n">b</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">a</span> <span class="o">!=</span> <span class="n">b</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">a</span> <span class="o">&gt;</span> <span class="n">b</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">a</span> <span class="o">&gt;=</span> <span class="n">b</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">neq</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">gte</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">lt</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">lte</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>For example:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kc">True</span> <span class="n">because</span> <span class="p">(</span><span class="n">a</span> <span class="o">:=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">b</span> <span class="o">:=</span> <span class="mi">2</span><span class="p">)</span>
+</span></code></pre></div>
+<p>However, when a comparison evaluates to <code>False</code>, the comparison gets flipped. For example:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kc">False</span> <span class="n">because</span> <span class="p">(</span><span class="n">a</span> <span class="o">:=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">b</span> <span class="o">:=</span> <span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="bool-expressions">Bool expressions</h3>
+<p>In DecisionTracker syntax, bool expressions are based on the <code>Bool</code> class:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="p">(</span><span class="n">x</span> <span class="ow">or</span> <span class="n">y</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">z</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
+<p>Again, DecisionTracker syntax is evaluated from left to right. If we wanted to change the order of operations, we would instead write:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">x</span> <span class="ow">or</span> <span class="n">y</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">z</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">Bool</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="ow">and</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">False</span><span class="p">)))</span>
+</span></code></pre></div>
+</div>
+<p>Just like a numeric expression, a bool expression can be converted to Evaluated Expressions, which can be seen in its string representation:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kc">True</span> <span class="n">because</span> <span class="p">(</span><span class="n">x</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">y</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">z</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kc">True</span> <span class="n">because</span> <span class="p">(</span><span class="n">x</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">y</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">z</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Nested &ldquo;or&rdquo; operations, or nested &ldquo;and&rdquo; operations, will be flattened, while maintaining the order of the operands and the final value.</p>
+</div>
+<p>However, when the following get converted to Evaluated Expressions, things look a bit different. Click on the <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg></span> icons to understand each case. These are examples of how Evaluated Expressions are not designed to represent the entire program, but to explain <em>why</em> it output certain values.</p>
+<ul>
+<li>
+<p><div></div>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kc">True</span> <span class="n">because</span> <span class="p">(</span><span class="n">y</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">z</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span></code></pre></div></p>
+<ol>
+<li>Why does this Evaluated Expression omit <code>x</code>? <br> Because <code>x</code> did not contribute to the final value being <code>True</code>.</li>
+</ol>
+</li>
+<li>
+<p><div></div>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">or_</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kc">False</span> <span class="n">because</span> <span class="p">(</span><span class="n">x</span> <span class="o">:=</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">y</span> <span class="o">:=</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">z</span> <span class="o">:=</span> <span class="kc">False</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span></code></pre></div></p>
+<ol>
+<li>Why has &ldquo;or&rdquo; been replaced with &ldquo;and&rdquo;? <br> Because the final value could be <code>False</code> only if <em>all</em> the inputs were <code>False</code>.</li>
+</ol>
+</li>
+<li>
+<p><div></div>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Bool</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">and_</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kc">False</span> <span class="n">because</span> <span class="p">(</span><span class="n">y</span> <span class="o">:=</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">z</span> <span class="o">:=</span> <span class="kc">False</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span></code></pre></div></p>
+<ol>
+<li>Why does this Evaluated Expression omit <code>x</code>? <br> Because <code>x</code> did not contribute to the final value being <code>False</code>. <p> Why has &ldquo;and&rdquo; been replaced with &ldquo;or&rdquo;? <br> Because the final value could be <code>False</code> if <em>any</em> of the inputs were <code>False</code>.</li>
+</ol>
+</li>
+<li>
+<p><div></div>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">str</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kc">False</span> <span class="n">because</span> <span class="p">(</span><span class="n">x</span> <span class="o">:=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">str</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="kc">True</span> <span class="n">because</span> <span class="p">(</span><span class="n">x</span> <span class="o">:=</span> <span class="kc">False</span><span class="p">)</span> <span class="c1"># (2)!</span>
+</span></code></pre></div></p>
+<ol>
+<li>Why do these Evaluated Expressions not include the &ldquo;not&rdquo; operator? <br> Because, just like above, the operator is not considered to be <em>causing</em> the final value.</li>
+<li>Why do these Evaluated Expressions not include the &ldquo;not&rdquo; operator? <br> Because, just like above, the operator is not considered to be <em>causing</em> the final value.</li>
+</ol>
+</li>
+</ul>
+<p>DecisionTracker supports alternate syntaxes for convenience or to suit user preferences:</p>
+<ul>
+<li><code>Bool(x).and_(y).and_(z))</code> can alternately be written as <code>Bool(x).and_(y, z)</code>.</li>
+<li><code>Bool(x).or_(Bool(y).and_(z))</code> can alternately be written as <code>Bool(x).or_(y, z)</code>.</li>
+</ul>
+<h3 id="if-elif-else-blocks">If-elif-else blocks</h3>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">if</span> <span class="n">a</span><span class="p">:</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="k">return</span> <span class="n">a1</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">elif</span> <span class="n">b</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="k">return</span> <span class="n">b1</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="k">else</span><span class="p">:</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="k">return</span> <span class="n">c1</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="n">a1</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="p">)</span><span class="o">.</span><span class="n">elif_</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">b1</span>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span>
+</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="n">c1</span>
+</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Obviously, you can have as many <code>.elif_(...).then(...)</code> cases as you wish (including none). However, unlike in regular Python syntax, a final <code>.else_(...)</code> is always required.</p>
+<h3 id="ternary-operators">Ternary operators</h3>
+<p>Ternary operator expressions can be written as follows:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">a</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">c</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Ternary operator expressions can be chained, but like this:</p>
+<div class="grid">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">a</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">c</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="n">e</span>
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
+<p>Not like the following (which checks <code>d</code> <em>before</em> <code>b</code> and is likely not what is intended); simply keep in mind that DecisionTracker syntax is evaluated from left to right.</p>
+<div class="grid">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">(</span><span class="n">a</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="n">e</span>
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<h3 id="dict-lookups">Dict lookups</h3>
+<p>Dictionary lookups can be written as follows:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Without a default</label><label for="__tabbed_1_2">With a default</label><label for="__tabbed_1_3">With a <code>None</code> default</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="grid" markdown>
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="p">{</span>
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>    <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>    <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="p">}[</span><span class="n">x</span><span class="p">]</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">Lookup</span><span class="p">(</span>
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    <span class="p">{</span>
+</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>        <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+</span><span id="__span-28-4"><a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>        <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span><span id="__span-28-5"><a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>    <span class="p">},</span>
+</span><span id="__span-28-6"><a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>    <span class="n">x</span><span class="p">,</span>
+</span><span id="__span-28-7"><a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+<div class="tabbed-block">
+<div class="grid" markdown>
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="p">{</span>
+</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>    <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="n">UncertainLookup</span><span class="p">(</span>
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="p">{</span>
+</span><span id="__span-30-3"><a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>        <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+</span><span id="__span-30-4"><a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>        <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span><span id="__span-30-5"><a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>    <span class="p">},</span>
+</span><span id="__span-30-6"><a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>    <span class="n">x</span><span class="p">,</span>
+</span><span id="__span-30-7"><a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>    <span class="n">c</span><span class="p">,</span>
+</span><span id="__span-30-8"><a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+<div class="tabbed-block">
+<div class="grid" markdown>
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="p">{</span>
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>    <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span><span id="__span-31-4"><a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="n">val</span> <span class="o">=</span> <span class="n">UncertainLookup</span><span class="p">(</span>
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>    <span class="p">{</span>
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>        <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>        <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="p">},</span>
+</span><span id="__span-32-6"><a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    <span class="n">x</span><span class="p">,</span>
+</span><span id="__span-32-7"><a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>The return value of <code>.get(x)</code> should be checked to not be <code>None</code> before being used. Similarly, <code>IsNotNull(val)</code> should be checked before using <code>val</code> &mdash; that is, using <code>Numeric(val)</code> if its possible values are numeric, <code>Bool(val)</code> if boolean, and so on.</p>
+</div>
+</div>
+</div>
+<h2 id="migrating-existing-programs">Migrating existing programs</h2>
+<p>TODO</p>
+<h2 id="storing-evaluated-expressions-in-a-database">Storing Evaluated Expressions in a database</h2>
+<p>TODO</p>
+<h2 id="interactive-viewing-using-the-grafana-panel">Interactive viewing using the Grafana panel</h2>
+<p>TODO</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": ".", "features": ["content.code.annotate", "content.code.copy"], "search": "assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>
