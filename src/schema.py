@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ForeignKeyConstraint, String, Uuid, inspect
+from sqlalchemy import ForeignKeyConstraint, Text, Uuid, inspect
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -39,9 +39,9 @@ class EvaluatedExpressionRecord(Base):
 
     id: Mapped[UUID] = mapped_column(Uuid, default=None, primary_key=True)
     parent_id: Mapped[UUID | None] = mapped_column(Uuid, default=None)
-    name: Mapped[str | None] = mapped_column(String, default=None)
+    name: Mapped[str | None] = mapped_column(Text, default=None)
     value: Mapped[Any] = mapped_column(JSONB)  # type: ignore
-    operator: Mapped[str | None] = mapped_column(String)  # type: ignore
+    operator: Mapped[str | None] = mapped_column(Text)  # type: ignore
 
     parent: Mapped[EvaluatedExpressionRecord | None] = relationship(
         default=NEVER_SET, back_populates="children", remote_side=[id], repr=False

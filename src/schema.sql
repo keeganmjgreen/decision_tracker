@@ -1,7 +1,7 @@
 CREATE TABLE evaluated_expression (
     id UUID PRIMARY KEY,
     parent_id UUID,
-    name VARCHAR NULL,
+    name TEXT NULL,
     value JSONB,
     operator TEXT NOT NULL
 
