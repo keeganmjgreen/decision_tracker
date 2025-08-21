@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import pytest
 import sqlalchemy as sqla
 from sqlalchemy.orm import Session
 
@@ -366,18 +367,26 @@ class TestLessThanOrEqualToComparison:
         assert str(y.with_name("y")) == "y := False because (a := 4) > (b := 2.0)"
 
 
-def test_inserting_expression_into_db(db_engine: sqla.Engine) -> None:
-    y = Not(x=True).with_name("y")
-    y.to_db(db_engine)
-    with Session(db_engine) as session:
-        records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
-        record_1, record_2 = records
-        assert isinstance(record_1.id, UUID)
-        assert record_1.parent_id is None
-        assert record_1.name == "y"
-        assert record_1.value is False
-        assert record_1.operator == "not"
-        assert record_2.parent_id == record_1.id
-        assert record_2.name == "x"
-        assert record_2.value is True
-        assert record_2.operator is None
+class TestToDb:
+    def test_inserting_expression_into_db(self, db_engine: sqla.Engine) -> None:
+        y = Not(x=True).with_name("y")
+        y.to_db(db_engine)
+        with Session(db_engine) as session:
+            records = session.scalars(sqla.select(EvaluatedExpressionRecord)).all()
+            record_1, record_2 = records
+            assert isinstance(record_1.id, UUID)
+            assert record_1.parent_id is None
+            assert record_1.name == "y"
+            assert record_1.value is False
+            assert record_1.operator == "not"
+            assert record_2.parent_id == record_1.id
+            assert record_2.name == "x"
+            assert record_2.value is True
+            assert record_2.operator is None
+
+    def test_raising_if_root_expression_is_unnamed(
+        self, db_engine: sqla.Engine
+    ) -> None:
+        x = Not(x=True)
+        with pytest.raises(ValueError):
+            x.to_db(db_engine)

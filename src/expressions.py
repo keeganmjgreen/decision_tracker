@@ -64,7 +64,10 @@ class BaseExpression[T](abc.ABC):
 
     def to_db(self, db_engine: Engine) -> None:
         if self._name is None:
-            raise Exception
+            raise ValueError(
+                "An expression cannot be inserted into the database without a name. "
+                "Try calling `.with_name()` first."
+            )
         with Session(db_engine) as session:
             session.add(self.evaluated_expression_record)  # Also adds children.
             session.commit()
