@@ -127,7 +127,9 @@ class BaseLiteralExpression[T](BaseExpression[T]):
     _operator: ClassVar[str | None] = None
     _short_operator: ClassVar[str | None] = _operator
 
-    def __init__(self, *unnamed_values: T, **named_values: T) -> None:
+    def __init__(
+        self, *unnamed_values: T | Callable[[], T], **named_values: T | Callable[[], T]
+    ) -> None:
         super().__init__()
         if len(unnamed_values) > 0:
             if len(named_values) > 0:
