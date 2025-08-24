@@ -226,11 +226,12 @@ Ternary operator expressions can be written as follows:
 <div class="grid" markdown>
 
 ```python title="Regular Python syntax"
+a, b, c = 1, True, 2
 a if b else c
 ```
 
 ```python title="DecisionTracker Python syntax"
-Int(a).if_(b).else_(c)
+Int(a=1).if_(b=True).else_(c=2)
 ```
 
 </div>
@@ -338,6 +339,72 @@ Dictionary lookups can be written as follows:
     </div>
 
     The return value of `.get(x)` should be checked to not be `None` before being used. Similarly, `IsNotNull(val)` should be checked before using `val` --- that is, using `Numeric(val)` if its possible values are numeric, `Bool(val)` if boolean, and so on.
+
+### Nullable expressions
+
+In Python, `None` indicates the absence of a value. A variable of a certain type `T` becomes an *optional* variable when of type `Optional[T]` or, equivalently, of type `T | None`. The variable can only be treated as type `T` after checking that the variable `is not None`.
+
+In DecisionTracker syntax, the term *nullable* is used instead of *optional*. A DecisionTracker expression is *nullable* if its `.value` is of type `T | None` instead of just `T`. A nullable expression can be created from the `Nullable` class.
+
+For example, say your program has an input `x`, retrieved by function `get_x` with the following signature.
+
+```python
+def get_x() -> int | None: ...
+```
+
+In DecisionTracker syntax, this input must be wrapped with `Nullable`:
+
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+x = get_x() # (1)!
+```
+
+1. `x` has type `int | None`.
+
+```python title="DecisionTracker Python syntax"
+x = Nullable(get_x()) # (1)!
+```
+
+1. `x` has type `Nullable[int]`.
+
+</div>
+
+`Nullable` allows checking whether the nullable expression is null (by checking its properties `.is_null` or `.is_not_null`). This is useful, for example, to provide a fallback value:
+
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+y = x if x is not None else 0 # (1)!
+```
+
+1. `y` has type `int`, not `int | None`, and Python's type checker knows this.
+
+```python title="DecisionTracker Python syntax"
+y = Numeric.from_(x).if_(x.is_not_null).else(0) # (1)!
+```
+
+1. `y` has type `Numeric`, not `Nullable[int]`, and we had to explicitly establish that fact by starting our DecisionTracker expression with `Numeric`. <p> `Numeric.from_(x)` is analogous to `typing.cast(int, x)`.
+
+</div>
+
+Sometimes you want to use a variable (e.g., in a calculation) and, if it is null, 'persist' the null value:
+
+<div class="grid" markdown>
+
+```python title="Regular Python syntax"
+y = x * 2 if x is not None else None # (1)!
+```
+
+1. `y` has type `int | None`, just like `x`, and Python's type checker knows this.
+
+```python title="DecisionTracker Python syntax"
+y = Nullable(Numeric.from_(x).times(2)).if_(x.is_not_null).else_(None) # (1)!
+```
+
+1. `y` has type `Nullable[int]`, just like `x`, and we had to explicitly establish that fact by starting our DecisionTracker expression with `Nullable`.
+
+</div>
 
 ## Migrating existing programs
 
