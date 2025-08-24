@@ -339,6 +339,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#nullable-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nullable expressions
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -464,6 +473,15 @@
   <a href="#dict-lookups" class="md-nav__link">
     <span class="md-ellipsis">
       Dict lookups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nullable-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nullable expressions
     </span>
   </a>
   
@@ -677,9 +695,10 @@
 <h3 id="ternary-operators">Ternary operators</h3>
 <p>Ternary operator expressions can be written as follows:</p>
 <div class="grid">
-<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">a</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">c</span>
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">2</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">a</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">c</span>
 </span></code></pre></div>
-<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">Int</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p>Ternary operator expressions can be chained, but like this:</p>
@@ -754,6 +773,51 @@
 <p>The return value of <code>.get(x)</code> should be checked to not be <code>None</code> before being used. Similarly, <code>IsNotNull(val)</code> should be checked before using <code>val</code> &mdash; that is, using <code>Numeric(val)</code> if its possible values are numeric, <code>Bool(val)</code> if boolean, and so on.</p>
 </div>
 </div>
+</div>
+<h3 id="nullable-expressions">Nullable expressions</h3>
+<p>In Python, <code>None</code> indicates the absence of a value. A variable of a certain type <code>T</code> becomes an <em>optional</em> variable when of type <code>Optional[T]</code> or, equivalently, of type <code>T | None</code>. The variable can only be treated as type <code>T</code> after checking that the variable <code>is not None</code>.</p>
+<p>In DecisionTracker syntax, the term <em>nullable</em> is used instead of <em>optional</em>. A DecisionTracker expression is <em>nullable</em> if its <code>.value</code> is of type <code>T | None</code> instead of just <code>T</code>. A nullable expression can be created from the <code>Nullable</code> class.</p>
+<p>For example, say your program has an input <code>x</code>, retrieved by function <code>get_x</code> with the following signature.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_x</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span></code></pre></div>
+<p>In DecisionTracker syntax, this input must be wrapped with <code>Nullable</code>:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">get_x</span><span class="p">()</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li><code>x</code> has type <code>int | None</code>.</li>
+</ol>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">Nullable</span><span class="p">(</span><span class="n">get_x</span><span class="p">())</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li><code>x</code> has type <code>Nullable[int]</code>.</li>
+</ol>
+</div>
+<p><code>Nullable</code> allows checking whether the nullable expression is null (by checking its properties <code>.is_null</code> or <code>.is_not_null</code>). This is useful, for example, to provide a fallback value:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li><code>y</code> has type <code>int</code>, not <code>int | None</code>, and Python&rsquo;s type checker knows this.</li>
+</ol>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">Numeric</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">is_not_null</span><span class="p">)</span><span class="o">.</span><span class="k">else</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li><code>y</code> has type <code>Numeric</code>, not <code>Nullable[int]</code>, and we had to explicitly establish that fact by starting our DecisionTracker expression with <code>Numeric</code>. <p> <code>Numeric.from_(x)</code> is analogous to <code>typing.cast(int, x)</code>.</li>
+</ol>
+</div>
+<p>Sometimes you want to use a variable (e.g., in a calculation) and, if it is null, &lsquo;persist&rsquo; the null value:</p>
+<div class="grid">
+<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li><code>y</code> has type <code>int | None</code>, just like <code>x</code>, and Python&rsquo;s type checker knows this.</li>
+</ol>
+<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">Nullable</span><span class="p">(</span><span class="n">Numeric</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">times</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">is_not_null</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li><code>y</code> has type <code>Nullable[int]</code>, just like <code>x</code>, and we had to explicitly establish that fact by starting our DecisionTracker expression with <code>Nullable</code>.</li>
+</ol>
 </div>
 <h2 id="migrating-existing-programs">Migrating existing programs</h2>
 <p>TODO</p>
