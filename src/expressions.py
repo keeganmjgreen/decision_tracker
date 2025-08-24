@@ -987,10 +987,13 @@ class LessThanOrEqualToComparison(_NumericComparison):
 
 
 class NullExpression(BaseLiteralExpression[None]):
+    _id = UUID(int=0)
+    _name = None
+    _literal_value = None
+
+    @override
     def __init__(self) -> None:
-        self._id = UUID(int=0)
-        self._name = None
-        self._literal_value = None
+        pass
 
 
 class IsOrIsNotNullExpression[T](BooleanBaseExpression):
