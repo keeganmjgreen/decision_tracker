@@ -25,17 +25,14 @@ from expressions import (
     Negative,
     Not,
     NotEqualToComparison,
+    Nullable,
     Or,
     Product,
     Sum,
     UncertainLookup,
 )
-from expressions import (
-    BooleanLiteralExpression as BooleanLiteral,
-)
-from expressions import (
-    NumericLiteralExpression as NumericLiteral,
-)
+from expressions import BooleanLiteralExpression as Bool
+from expressions import NumericLiteralExpression as Numeric
 from schema import (
     Base,
     EvaluatedExpressionRecord,
@@ -46,25 +43,21 @@ from utils import get_exactly_one
 
 class TestBooleanExpression:
     def test_boolean_expression(self) -> None:
-        y = BooleanLiteral(True)
+        y = Bool(True)
         assert y.value is True
         assert str(y) == "True"
-        assert str(BooleanLiteral(y=True)) == "y := True"
+        assert str(Bool(y=True)) == "y := True"
 
     def test_and_ing(self) -> None:
-        assert BooleanLiteral(a=True).and_(b=True, c=True) == And(
-            a=True, b=True, c=True
-        )
+        assert Bool(a=True).and_(b=True, c=True) == And(a=True, b=True, c=True)
         assert And(a=True, b=True).and_(c=True, d=True) == And(
             a=True, b=True, c=True, d=True
         )
 
     def test_or_ing(self) -> None:
-        assert BooleanLiteral(a=True).or_(b=True) == Or(a=True, b=True)
+        assert Bool(a=True).or_(b=True) == Or(a=True, b=True)
         assert Or(a=True, b=True).or_(c=True) == Or(a=True, b=True, c=True)
-        assert BooleanLiteral(a=True).or_(b=True, c=True) == Or(
-            BooleanLiteral(a=True), And(b=True, c=True)
-        )
+        assert Bool(a=True).or_(b=True, c=True) == Or(Bool(a=True), And(b=True, c=True))
 
 
 class TestNotExpression:
@@ -134,20 +127,20 @@ class TestOrExpression:
 def test_if_elif_else() -> None:
     assert If(a=True).then(1).else_(2) == Conditional(
         result_if_true=1,
-        condition=BooleanLiteral(a=True),
+        condition=Bool(a=True),
         result_if_false=2,
     )
     assert If(a=True).then(1).elif_(b=True).then(2).elif_(c=True).then(3).else_(
         4
     ) == Conditional(
         result_if_true=1,
-        condition=BooleanLiteral(a=True),
+        condition=Bool(a=True),
         result_if_false=Conditional(
             result_if_true=2,
-            condition=BooleanLiteral(b=True),
+            condition=Bool(b=True),
             result_if_false=Conditional(
                 result_if_true=3,
-                condition=BooleanLiteral(c=True),
+                condition=Bool(c=True),
                 result_if_false=4,
             ),
         ),
@@ -155,28 +148,26 @@ def test_if_elif_else() -> None:
 
 
 def test_ternary_operator_expression() -> None:
-    assert NumericLiteral(1).if_(x=True).else_(2) == Conditional(
+    assert Numeric(1).if_(x=True).else_(2) == Conditional(
         result_if_true=1,
-        condition=BooleanLiteral(x=True),
+        condition=Bool(x=True),
         result_if_false=2,
     )
-    assert NumericLiteral(1).if_(x=True).else_(2).if_(y=True).else_(3) == Conditional(
+    assert Numeric(1).if_(x=True).else_(2).if_(y=True).else_(3) == Conditional(
         result_if_true=Conditional(
             result_if_true=1,
-            condition=BooleanLiteral(x=True),
+            condition=Bool(x=True),
             result_if_false=2,
         ),
-        condition=BooleanLiteral(y=True),
+        condition=Bool(y=True),
         result_if_false=3,
     )
-    assert NumericLiteral(1).if_(x=True).else_(
-        NumericLiteral(2).if_(y=True).else_(3)
-    ) == Conditional(
+    assert Numeric(1).if_(x=True).else_(Numeric(2).if_(y=True).else_(3)) == Conditional(
         result_if_true=1,
-        condition=BooleanLiteral(x=True),
+        condition=Bool(x=True),
         result_if_false=Conditional(
             result_if_true=2,
-            condition=BooleanLiteral(y=True),
+            condition=Bool(y=True),
             result_if_false=3,
         ),
     )
@@ -184,17 +175,13 @@ def test_ternary_operator_expression() -> None:
 
 class TestConditionalExpression:
     def test_when_true(self) -> None:
-        y = Conditional(
-            result_if_true=1, condition=BooleanLiteral(x=True), result_if_false=2
-        )
+        y = Conditional(result_if_true=1, condition=Bool(x=True), result_if_false=2)
         assert y.value == 1
         assert str(y) == "1 because x := True"
         assert str(y.with_name("y")) == "y := 1 because x := True"
 
     def test_when_false(self) -> None:
-        y = Conditional(
-            result_if_true=1, condition=BooleanLiteral(x=False), result_if_false=2
-        )
+        y = Conditional(result_if_true=1, condition=Bool(x=False), result_if_false=2)
         assert y.value == 2
         assert str(y) == "2 because x := False"
         assert str(y.with_name("y")) == "y := 2 because x := False"
@@ -202,9 +189,9 @@ class TestConditionalExpression:
     def test_with_named_results(self) -> None:
         """Test when `result_if_true` and/or `result_if_false` are named."""
         y = Conditional(
-            result_if_true=NumericLiteral(a=1),
-            condition=BooleanLiteral(x=True),
-            result_if_false=NumericLiteral(b=2),
+            result_if_true=Numeric(a=1),
+            condition=Bool(x=True),
+            result_if_false=Numeric(b=2),
         )
         assert y.value == 1
 
@@ -234,29 +221,19 @@ class TestUncertainLookup:
 
 
 def test_numeric_expression() -> None:
-    assert NumericLiteral(a=4).times(b=2.0) == Product(a=4, b=2.0)
-    assert NumericLiteral(a=4).divided_by(b=2.0) == Product(
-        NumericLiteral(a=4), Inverse(b=2.0)
+    assert Numeric(a=4).times(b=2.0) == Product(a=4, b=2.0)
+    assert Numeric(a=4).divided_by(b=2.0) == Product(Numeric(a=4), Inverse(b=2.0))
+    assert Numeric(a=4).plus(b=2.0) == Sum(a=4, b=2.0)
+    assert Numeric(a=4).minus(b=2.0) == Sum(Numeric(a=4), Negative(b=2.0))
+    assert Numeric(a=4).eq(b=2.0) == EqualToComparison(Numeric(a=4), Numeric(b=2.0))
+    assert Numeric(a=4).neq(b=2.0) == NotEqualToComparison(Numeric(a=4), Numeric(b=2.0))
+    assert Numeric(a=4).gt(b=2.0) == GreaterThanComparison(Numeric(a=4), Numeric(b=2.0))
+    assert Numeric(a=4).gte(b=2.0) == GreaterThanOrEqualToComparison(
+        Numeric(a=4), Numeric(b=2.0)
     )
-    assert NumericLiteral(a=4).plus(b=2.0) == Sum(a=4, b=2.0)
-    assert NumericLiteral(a=4).minus(b=2.0) == Sum(NumericLiteral(a=4), Negative(b=2.0))
-    assert NumericLiteral(a=4).eq(b=2.0) == EqualToComparison(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
-    )
-    assert NumericLiteral(a=4).neq(b=2.0) == NotEqualToComparison(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
-    )
-    assert NumericLiteral(a=4).gt(b=2.0) == GreaterThanComparison(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
-    )
-    assert NumericLiteral(a=4).gte(b=2.0) == GreaterThanOrEqualToComparison(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
-    )
-    assert NumericLiteral(a=4).lt(b=2.0) == LessThanComparison(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
-    )
-    assert NumericLiteral(a=4).lte(b=2.0) == LessThanOrEqualToComparison(
-        NumericLiteral(a=4), NumericLiteral(b=2.0)
+    assert Numeric(a=4).lt(b=2.0) == LessThanComparison(Numeric(a=4), Numeric(b=2.0))
+    assert Numeric(a=4).lte(b=2.0) == LessThanOrEqualToComparison(
+        Numeric(a=4), Numeric(b=2.0)
     )
 
 
@@ -295,10 +272,10 @@ class TestProductExpression:
 
 
 def test_inverse_expression() -> None:
-    y = Inverse(NumericLiteral(a=4))
+    y = Inverse(Numeric(a=4))
     assert y.value == 0.25
     assert type(y.value) is float
-    assert type(Inverse(NumericLiteral(a=4.0)).value) is float
+    assert type(Inverse(Numeric(a=4.0)).value) is float
     assert str(y) == "0.25 because 1 / (a := 4)"
     assert str(y.with_name("y")) == "y := 0.25 because 1 / (a := 4)"
 
@@ -336,10 +313,10 @@ class TestSumExpression:
 
 
 def test_negative_expression() -> None:
-    y = Negative(NumericLiteral(a=4))
+    y = Negative(Numeric(a=4))
     assert y.value == -4
     assert type(y.value) is int
-    assert type(Negative(NumericLiteral(a=4.0)).value) is float
+    assert type(Negative(Numeric(a=4.0)).value) is float
     assert str(y) == "-4 because -(a := 4)"
     assert str(y.with_name("y")) == "y := -4 because -(a := 4)"
 
@@ -350,13 +327,13 @@ def test_negative_of_inverse() -> None:
 
 class TestEqualToComparison:
     def test_when_true(self) -> None:
-        y = EqualToComparison(NumericLiteral(a=4), NumericLiteral(b=4.0))
+        y = EqualToComparison(Numeric(a=4), Numeric(b=4.0))
         assert y.value is True
         assert str(y) == "True because (a := 4) == (b := 4.0)"
         assert str(y.with_name("y")) == "y := True because (a := 4) == (b := 4.0)"
 
     def test_when_false(self) -> None:
-        y = EqualToComparison(NumericLiteral(a=4), NumericLiteral(b=2.0))
+        y = EqualToComparison(Numeric(a=4), Numeric(b=2.0))
         assert y.value is False
         assert str(y) == "False because (a := 4) != (b := 2.0)"
         assert str(y.with_name("y")) == "y := False because (a := 4) != (b := 2.0)"
@@ -364,13 +341,13 @@ class TestEqualToComparison:
 
 class TestNotEqualToComparison:
     def test_when_true(self) -> None:
-        y = NotEqualToComparison(NumericLiteral(a=4), NumericLiteral(b=2.0))
+        y = NotEqualToComparison(Numeric(a=4), Numeric(b=2.0))
         assert y.value is True
         assert str(y) == "True because (a := 4) != (b := 2.0)"
         assert str(y.with_name("y")) == "y := True because (a := 4) != (b := 2.0)"
 
     def test_when_false(self) -> None:
-        y = NotEqualToComparison(NumericLiteral(a=4), NumericLiteral(b=4.0))
+        y = NotEqualToComparison(Numeric(a=4), Numeric(b=4.0))
         assert y.value is False
         assert str(y) == "False because (a := 4) == (b := 4.0)"
         assert str(y.with_name("y")) == "y := False because (a := 4) == (b := 4.0)"
@@ -378,13 +355,13 @@ class TestNotEqualToComparison:
 
 class TestGreaterThanComparison:
     def test_when_true(self) -> None:
-        y = GreaterThanComparison(NumericLiteral(a=4), NumericLiteral(b=2.0))
+        y = GreaterThanComparison(Numeric(a=4), Numeric(b=2.0))
         assert y.value is True
         assert str(y) == "True because (a := 4) > (b := 2.0)"
         assert str(y.with_name("y")) == "y := True because (a := 4) > (b := 2.0)"
 
     def test_when_false(self) -> None:
-        y = GreaterThanComparison(NumericLiteral(a=4), NumericLiteral(b=4.0))
+        y = GreaterThanComparison(Numeric(a=4), Numeric(b=4.0))
         assert y.value is False
         assert str(y) == "False because (a := 4) <= (b := 4.0)"
         assert str(y.with_name("y")) == "y := False because (a := 4) <= (b := 4.0)"
@@ -393,16 +370,16 @@ class TestGreaterThanComparison:
 class TestGreaterThanOrEqualToComparison:
     def test_when_true(self) -> None:
         # When greater than:
-        y = GreaterThanOrEqualToComparison(NumericLiteral(a=4), NumericLiteral(b=2.0))
+        y = GreaterThanOrEqualToComparison(Numeric(a=4), Numeric(b=2.0))
         assert y.value is True
         assert str(y) == "True because (a := 4) >= (b := 2.0)"
         assert str(y.with_name("y")) == "y := True because (a := 4) >= (b := 2.0)"
         # When equal to:
-        y = GreaterThanOrEqualToComparison(NumericLiteral(a=4), NumericLiteral(b=4.0))
+        y = GreaterThanOrEqualToComparison(Numeric(a=4), Numeric(b=4.0))
         assert y.value is True
 
     def test_when_false(self) -> None:
-        y = GreaterThanOrEqualToComparison(NumericLiteral(a=2), NumericLiteral(b=4.0))
+        y = GreaterThanOrEqualToComparison(Numeric(a=2), Numeric(b=4.0))
         assert y.value is False
         assert str(y) == "False because (a := 2) < (b := 4.0)"
         assert str(y.with_name("y")) == "y := False because (a := 2) < (b := 4.0)"
@@ -410,13 +387,13 @@ class TestGreaterThanOrEqualToComparison:
 
 class TestLessThanComparison:
     def test_when_true(self) -> None:
-        y = LessThanComparison(NumericLiteral(a=2), NumericLiteral(b=4.0))
+        y = LessThanComparison(Numeric(a=2), Numeric(b=4.0))
         assert y.value is True
         assert str(y) == "True because (a := 2) < (b := 4.0)"
         assert str(y.with_name("y")) == "y := True because (a := 2) < (b := 4.0)"
 
     def test_when_false(self) -> None:
-        y = LessThanComparison(NumericLiteral(a=4), NumericLiteral(b=4.0))
+        y = LessThanComparison(Numeric(a=4), Numeric(b=4.0))
         assert y.value is False
         assert str(y) == "False because (a := 4) >= (b := 4.0)"
         assert str(y.with_name("y")) == "y := False because (a := 4) >= (b := 4.0)"
@@ -425,19 +402,51 @@ class TestLessThanComparison:
 class TestLessThanOrEqualToComparison:
     def test_when_true(self) -> None:
         # When less than:
-        y = LessThanOrEqualToComparison(NumericLiteral(a=2), NumericLiteral(b=4.0))
+        y = LessThanOrEqualToComparison(Numeric(a=2), Numeric(b=4.0))
         assert y.value is True
         assert str(y) == "True because (a := 2) <= (b := 4.0)"
         assert str(y.with_name("y")) == "y := True because (a := 2) <= (b := 4.0)"
         # When equal to:
-        y = LessThanOrEqualToComparison(NumericLiteral(a=4), NumericLiteral(b=4.0))
+        y = LessThanOrEqualToComparison(Numeric(a=4), Numeric(b=4.0))
         assert y.value is True
 
     def test_when_false(self) -> None:
-        y = LessThanOrEqualToComparison(NumericLiteral(a=4), NumericLiteral(b=2.0))
+        y = LessThanOrEqualToComparison(Numeric(a=4), Numeric(b=2.0))
         assert y.value is False
         assert str(y) == "False because (a := 4) > (b := 2.0)"
         assert str(y.with_name("y")) == "y := False because (a := 4) > (b := 2.0)"
+
+
+class TestNullable:
+    def test_nullable(self) -> None:
+        y = Nullable[int](x=None)
+        assert y.is_null.value is True
+        assert str(y.is_null) == "True because (x := None) is (None)"
+        assert y.is_not_null.value is False
+        assert str(y.is_not_null) == "False because (x := None) is (None)"
+
+        y = Nullable(x=1)
+        assert y.is_null.value is False
+        assert str(y.is_null) == "False because (x := 1) is not (None)"
+        assert y.is_not_null.value is True
+        assert str(y.is_not_null) == "True because (x := 1) is not (None)"
+
+    def test_checking_whether_nullable_is_null(self) -> None:
+        a = Nullable[int](x=None)
+        b = Nullable(Numeric.from_(a).times(2)).if_(a.is_not_null).else_(None)
+        assert b.value is None
+        assert str(b) == "None because (x := None) is (None)"
+        c = Numeric.from_(b).times(3).if_(b.is_not_null).else_(4)
+        assert c.value == 4
+        assert str(c) == "4 because (None because (x := None) is (None)) is (None)"
+
+        a = Nullable(x=1)
+        b = Nullable(Numeric.from_(a).times(2)).if_(a.is_not_null).else_(None)
+        assert b.value == 2
+        assert str(b) == "2 because (x := 1) is not (None)"
+        c = Numeric.from_(b).times(3).if_(b.is_not_null).else_(4)
+        assert c.value == 6
+        assert str(c) == "6 because (2 because (x := 1) is not (None)) is not (None)"
 
 
 class TestToDb:
@@ -506,7 +515,7 @@ class TestToDb:
         md_table = define_metadata_table(Base.metadata, cols=[])
         Base.metadata.create_all(db_engine)
 
-        x = NumericLiteral(a=4).times(b=2)
+        x = Numeric(a=4).times(b=2)
         y = Negative(x).with_name("y")
         z = Inverse(x).with_name("z")
         y.to_db(db_engine, metadata=dict())

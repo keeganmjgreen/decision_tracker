@@ -3,7 +3,16 @@ from __future__ import annotations
 import abc
 import math
 from copy import deepcopy
-from typing import Any, Callable, ClassVar, Self, TypeVar, cast, override
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Self,
+    TypeVar,
+    cast,
+    get_type_hints,
+    override,
+)
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine, insert
@@ -114,21 +123,22 @@ class BaseExpression[T](abc.ABC):
     def is_not_null(self) -> IsNotNullExpression[T]:
         return IsNotNullExpression(self)
 
-    @property
-    def not_null(self) -> T:
-        if self.is_null.value:
-            raise Exception
-        else:
-            return cast(T, self)
+
+type LiteralOrExpr[T] = T | BaseExpression[T]
+type LiteralOrExprOrCallableThereof[T] = (
+    LiteralOrExpr[T] | Callable[[], LiteralOrExpr[T]]
+)
 
 
 class BaseLiteralExpression[T](BaseExpression[T]):
-    _literal_value: T | Callable[[], T]
+    _literal_value: LiteralOrExprOrCallableThereof[T]
     _operator: ClassVar[str | None] = None
     _short_operator: ClassVar[str | None] = _operator
 
     def __init__(
-        self, *unnamed_values: T | Callable[[], T], **named_values: T | Callable[[], T]
+        self,
+        *unnamed_values: LiteralOrExprOrCallableThereof[T],
+        **named_values: LiteralOrExprOrCallableThereof[T],
     ) -> None:
         super().__init__()
         if len(unnamed_values) > 0:
@@ -144,11 +154,15 @@ class BaseLiteralExpression[T](BaseExpression[T]):
 
     @property
     def value(self) -> T:
-        return (
-            cast(T, self._literal_value())
+        return_value = (
+            self._literal_value()
             if callable(self._literal_value)
             else self._literal_value
         )
+        if isinstance(return_value, BaseExpression):
+            return cast(BaseExpression[T], return_value).value
+        else:
+            return cast(T, return_value)
 
     @property
     def operands(self) -> list[BaseExpression[T]]:
@@ -156,7 +170,24 @@ class BaseLiteralExpression[T](BaseExpression[T]):
 
     @property
     def evaluated_expression(self) -> BaseExpression[T]:
-        return self
+        return_type = (
+            get_type_hints(
+                self._literal_value, localns=dict(T=T, BaseExpression=BaseExpression)
+            )["return"]
+            if callable(self._literal_value)
+            else type(self._literal_value)
+        )
+        if hasattr(return_type, "__origin__"):
+            return_type = return_type.__origin__  # type: ignore
+        if issubclass(return_type, BaseExpression):
+            return cast(
+                BaseExpression[T],
+                self._literal_value()
+                if callable(self._literal_value)
+                else self._literal_value,
+            ).evaluated_expression
+        else:
+            return self
 
     @property
     @override
@@ -166,6 +197,19 @@ class BaseLiteralExpression[T](BaseExpression[T]):
     @override
     def __str__(self) -> str:
         return self.reason
+
+    @classmethod
+    def from_(cls, nullable: BaseExpression[Any | None]) -> Self:
+        def not_null() -> BaseExpression[T]:
+            if nullable.value is None:
+                raise ValueError
+            return cast(BaseExpression[T], nullable)
+
+        return cls(not_null)
+
+
+class Nullable[T](BaseLiteralExpression[T | None]):
+    pass
 
 
 def _one_expression_from[T](
@@ -561,7 +605,7 @@ class Conditional[RT](BaseExpression[RT]):
 
     @property
     def reason(self) -> str:
-        return self.evaluated_expression.reason
+        return f"{self.value} because " + self.evaluated_expression.reason
 
     @override
     def __str__(self):
@@ -986,7 +1030,7 @@ class LessThanOrEqualToComparison(_NumericComparison):
 # Nullable
 
 
-class NullExpression(BaseLiteralExpression[None]):
+class NullExpression(BaseLiteralExpression[Any | None]):
     _id = UUID(int=0)
     _name = None
     _literal_value = None
@@ -996,9 +1040,10 @@ class NullExpression(BaseLiteralExpression[None]):
         pass
 
 
+Null = NullExpression()
+
+
 class IsOrIsNotNullExpression[T](BooleanBaseExpression):
-    _operator: ClassVar[str | None] = "is"
-    _short_operator: ClassVar[str | None] = _operator
     _val: BaseExpression[T]
 
     def __init__(self, val: BaseExpression[T]) -> None:
@@ -1006,14 +1051,14 @@ class IsOrIsNotNullExpression[T](BooleanBaseExpression):
         self._val = val
 
     @property
-    def operands(self) -> list[BaseExpression[T] | BaseExpression[None]]:
-        return [
-            self._val if self._val.value is not None else NullExpression(),
-            NullExpression(),
-        ]
+    def operands(self) -> list[BaseExpression[T] | NullExpression]:
+        return [self._val, Null]
 
 
 class IsNullExpression[T](IsOrIsNotNullExpression[T]):
+    _operator: ClassVar[str | None] = "is"
+    _short_operator: ClassVar[str | None] = _operator
+
     @property
     def value(self) -> bool:
         return self._val.value is None
@@ -1024,6 +1069,9 @@ class IsNullExpression[T](IsOrIsNotNullExpression[T]):
 
 
 class IsNotNullExpression[T](IsOrIsNotNullExpression[T]):
+    _operator: ClassVar[str | None] = "is not"
+    _short_operator: ClassVar[str | None] = _operator
+
     @property
     def value(self) -> bool:
         return self._val.value is not None
