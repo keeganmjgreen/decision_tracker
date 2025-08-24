@@ -191,9 +191,6 @@ def _expressions_from[T](
 # Boolean expressions
 
 
-RT = TypeVar("RT")
-
-
 class BooleanBaseExpression(BaseExpression[bool]):
     @property
     @override
@@ -365,6 +362,9 @@ def _ensure_expression[T](input: BaseExpression[T] | T) -> BaseExpression[T]:
 
 # ======================================================================================
 # Conditional expressions
+
+
+RT = TypeVar("RT")
 
 
 class If:
