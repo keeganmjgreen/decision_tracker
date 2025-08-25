@@ -354,18 +354,42 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#migrating-existing-programs" class="md-nav__link">
+  <a href="#decisiontracker-expression" class="md-nav__link">
     <span class="md-ellipsis">
-      Migrating existing programs
+      DecisionTracker expression
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DecisionTracker expression">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#property-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      Property value
     </span>
   </a>
   
 </li>
+        
+          <li class="md-nav__item">
+  <a href="#method-to_db" class="md-nav__link">
+    <span class="md-ellipsis">
+      Method to_db
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#storing-evaluated-expressions-in-a-database" class="md-nav__link">
+  <a href="#storage-of-evaluated-expressions-in-your-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Storing Evaluated Expressions in a database
+      Storage of Evaluated Expressions in your database
     </span>
   </a>
   
@@ -493,18 +517,42 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#migrating-existing-programs" class="md-nav__link">
+  <a href="#decisiontracker-expression" class="md-nav__link">
     <span class="md-ellipsis">
-      Migrating existing programs
+      DecisionTracker expression
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DecisionTracker expression">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#property-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      Property value
     </span>
   </a>
   
 </li>
+        
+          <li class="md-nav__item">
+  <a href="#method-to_db" class="md-nav__link">
+    <span class="md-ellipsis">
+      Method to_db
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#storing-evaluated-expressions-in-a-database" class="md-nav__link">
+  <a href="#storage-of-evaluated-expressions-in-your-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Storing Evaluated Expressions in a database
+      Storage of Evaluated Expressions in your database
     </span>
   </a>
   
@@ -537,10 +585,26 @@
 
 <h1 id="decisiontracker">DecisionTracker</h1>
 <p>DecisionTracker is a Python library for writing explainable, traceable, and auditable Python programs.</p>
-<p>Using monadic patterns, the library provides a <em>DecisionTracker syntax</em> for writing logic and math operations and control flow. Through this syntax, it allows one or more trees of expressions to be built up under the hood. A tree represents some code paths, math, and logic of the program. Each tree can be evaluated to a final value, equivalent to obtaining one of the outputs of the program if it had been written using vanilla Python syntax instead of DecisionTracker syntax.</p>
-<p>In addition, the tree can be simplified to represent only the logic and math of the code path taken to arrive at the tree&rsquo;s final value. This simplified tree can be flattened to a list of Evaluated Expressions, which can be stored in a dedicated relational database table. This allows program executions and outputs to be explained, traced, and audited at a level of thoroughness and ease which traditional logging cannot provide.</p>
-<p>Furthermore, the library offers the <a href="https://github.com/keeganmjgreen/keegangreen-decisiontracker-panel">DecisionTracker Grafana panel</a>, allowing the simplified tree to be reconstructed from the Evaluated Expressions stored in the database, and then viewed interactively.</p>
+<p>Using monadic patterns, the library provides the [DecisionTracker syntax] for writing logic and math operations and control flow. Through this syntax, it allows one or more trees of expressions to be built up under the hood. A tree represents some code paths, math, and logic of the program. Each tree can be evaluated to a final value, equivalent to obtaining one of the outputs of the program if it had been written using vanilla Python syntax instead of DecisionTracker syntax.</p>
+<p>In addition, the tree can be simplified to represent only the logic and math of the code path taken to arrive at the tree&rsquo;s final value. This simplified tree can be flattened to a list of <em>Evaluated Expressions</em>, which can be stored in [dedicated database tables]. This allows program executions and outputs to be explained, traced, and audited at a level of thoroughness and ease which traditional logging cannot provide.</p>
+<p>Furthermore, the library is accompanied by the <a href="https://github.com/keeganmjgreen/keegangreen-decisiontracker-panel/tree/master/src">DecisionTracker Grafana panel</a>, allowing the simplified tree to be reconstructed from the Evaluated Expressions stored in the database, and then viewed interactively.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>DecisionTracker does not need you to set up an additional database or service. It is intended for internal use by development and QA teams with existing tech stacks. DecisionTracker is intended to use your existing relational database and, optionally, your existing [Grafana] instance.</p>
+</div>
+<p>The following diagram illustrates the end-to-end flow:</p>
 <p><img alt="" src="high_level_diagram.drawio.svg" /></p>
+<ol>
+<li>
+<p>The logic, math, and code paths of a Python program are written in DecisionTracker syntax. The output expression is actually a tree of expressions. The [<code>value</code>] property computes its final value. The [<code>to_db</code>] method converts the tree to a simplified tree of Evaluated Expressions and inserts them into your database along with some <code>metadata</code>.</p>
+</li>
+<li>
+<p>The Evaluated Expressions and their metadata are stored in <code>evaluated_expression</code>, <code>evaluated_expression_association</code>, and <code>evaluated_expression_metadata</code> tables in your relational database.</p>
+</li>
+<li>
+<p>Evaluated Expressions are queried from your database. The DecisionTracker Grafana panel reconstructs the simplified tree from the Evaluated Expressions and allows them to be viewed interactively.</p>
+</li>
+</ol>
 <h2 id="decisiontracker-syntax">DecisionTracker syntax</h2>
 <p>DecisionTracker syntax is a re-implementation of a subset of Python syntax, in Python syntax, in order to support DecisionTracker&rsquo;s features. The subset of Python syntax that is supported represents the kind of code expressions that can be stored in a database and for which DecisionTracker offers explainability and traceability.</p>
 <h3 id="numeric-expressions">Numeric expressions</h3>
@@ -594,7 +658,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kc">True</span> <span class="n">because</span> <span class="p">(</span><span class="n">a</span> <span class="o">:=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">b</span> <span class="o">:=</span> <span class="mi">2</span><span class="p">)</span>
 </span></code></pre></div>
-<p>However, when a comparison evaluates to <code>False</code>, the comparison gets flipped. For example:</p>
+<p>However, when a comparison evaluates to <code>False</code>, the comparison gets flipped in its Evaluated Expression. For example:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">Numeric</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kc">False</span> <span class="n">because</span> <span class="p">(</span><span class="n">a</span> <span class="o">:=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">b</span> <span class="o">:=</span> <span class="mi">4</span><span class="p">)</span>
 </span></code></pre></div>
@@ -808,23 +872,73 @@
 </div>
 <p>Sometimes you want to use a variable (e.g., in a calculation) and, if it is null, &lsquo;persist&rsquo; the null value:</p>
 <div class="grid">
-<div class="language-python highlight"><span class="filename">Regular Python syntax</span><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span> <span class="c1"># (1)!</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span> <span class="c1"># (1)!</span>
 </span></code></pre></div>
 <ol>
 <li><code>y</code> has type <code>int | None</code>, just like <code>x</code>, and Python&rsquo;s type checker knows this.</li>
 </ol>
-<div class="language-python highlight"><span class="filename">DecisionTracker Python syntax</span><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">Nullable</span><span class="p">(</span><span class="n">Numeric</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">times</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">is_not_null</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># (1)!</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="n">y</span> <span class="o">=</span> <span class="n">Nullable</span><span class="p">(</span><span class="n">Numeric</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">times</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">if_</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">is_not_null</span><span class="p">)</span><span class="o">.</span><span class="n">else_</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># (1)!</span>
 </span></code></pre></div>
 <ol>
 <li><code>y</code> has type <code>Nullable[int]</code>, just like <code>x</code>, and we had to explicitly establish that fact by starting our DecisionTracker expression with <code>Nullable</code>.</li>
 </ol>
 </div>
-<h2 id="migrating-existing-programs">Migrating existing programs</h2>
-<p>TODO</p>
-<h2 id="storing-evaluated-expressions-in-a-database">Storing Evaluated Expressions in a database</h2>
-<p>TODO</p>
+<h2 id="decisiontracker-expression">DecisionTracker expression</h2>
+<h3 id="property-value"><em>Property</em> <code>value</code></h3>
+<p>Compute and return the DecisionTracker expression&rsquo;s final value. The value of a <code>Bool</code> expression, for example, is a raw <code>bool</code>.</p>
+<h3 id="method-to_db"><em>Method</em> <code>to_db</code></h3>
+<p>Convert the DecisionTracker expression and its child expressions to a simplified tree of Evaluated Expressions, and then inserts them into [dedicated database tables].</p>
+<p>Arguments:</p>
+<ul>
+<li>
+<p><code>engine</code>: An SQLAlchemy <code>Engine</code> object with which to insert the Evaluated Expressions.</p>
+</li>
+<li>
+<p><code>metadata</code>: Key-value pairs of metadata for the DecisionTracker expression. Keys correspond to <code>evaluated_expression_metadata</code> table columns (e.g., <code>service_id</code>, <code>timestamp</code>).</p>
+</li>
+<li>
+<p><code>db_schema</code>: Name of the database schema containing the tables. Defaults to &ldquo;decision_tracker&rdquo;.</p>
+</li>
+</ul>
+<h2 id="storage-of-evaluated-expressions-in-your-database">Storage of Evaluated Expressions in your database</h2>
+<p>DecisionTracker requires dedicated tables in your relational database (e.g., Postgres), potentially in a dedicated schema.</p>
+<ul>
+<li>
+<p>The <strong><code>evaluated_expression</code> table</strong> stores Evaluated Expressions (naturally).</p>
+</li>
+<li>
+<p>The <strong><code>evaluated_expression_association</code> table</strong> stores the relationships between the Evaluated Expressions. Usually, this is a one-to-many (parent-children) relationship. However, because a child expression can be used and reused in more than one parent expression, this has been generalized to a many-to-many relationship which requires such an association table.</p>
+</li>
+<li>
+<p>The <strong><code>evaluated_expression_metadata</code> table</strong> stores arbitrary, user-defined metadata for each root Evaluated Expression, specified when calling [<code>to_db</code>].</p>
+</li>
+</ul>
+<p>The following SQL script can be executed to create the tables. A single, dedicated schema called <code>"decision_tracker"</code> is <strong>recommended</strong>, especially if you plan on integrating multiple services with it. Adding <code>evaluated_expression_metadata</code> columns, such as a <code>service_id</code> and <code>timestamp</code>, is <strong>strongly recommended</strong>.</p>
+<div class="language-sql highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">decision_tracker</span><span class="p">.</span><span class="n">evaluated_expression</span><span class="w"> </span><span class="p">(</span>
+</span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">    </span><span class="n">name</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+</span><span id="__span-40-4"><a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">    </span><span class="n">value</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span>
+</span><span id="__span-40-5"><a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="w">    </span><span class="k">operator</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+</span><span id="__span-40-6"><a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span class="p">);</span>
+</span><span id="__span-40-7"><a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>
+</span><span id="__span-40-8"><a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">decision_tracker</span><span class="p">.</span><span class="n">evaluated_expression_association</span><span class="w"> </span><span class="p">(</span>
+</span><span id="__span-40-9"><a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a><span class="w">    </span><span class="n">child_id</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">UUID</span><span class="p">,</span>
+</span><span id="__span-40-10"><a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="w">    </span><span class="n">parent_id</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">UUID</span><span class="p">,</span>
+</span><span id="__span-40-11"><a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a>
+</span><span id="__span-40-12"><a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a><span class="w">    </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="k">FOREIGN</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">child_id</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">decision_tracker</span><span class="p">.</span><span class="n">evaluated_expression</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+</span><span id="__span-40-13"><a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a><span class="w">    </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="k">FOREIGN</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">parent_id</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">decision_tracker</span><span class="p">.</span><span class="n">evaluated_expression</span><span class="p">.</span><span class="n">id</span>
+</span><span id="__span-40-14"><a id="__codelineno-40-14" name="__codelineno-40-14" href="#__codelineno-40-14"></a><span class="p">);</span>
+</span><span id="__span-40-15"><a id="__codelineno-40-15" name="__codelineno-40-15" href="#__codelineno-40-15"></a>
+</span><span id="__span-40-16"><a id="__codelineno-40-16" name="__codelineno-40-16" href="#__codelineno-40-16"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">decision_tracker</span><span class="p">.</span><span class="n">evaluated_expression_metadata</span><span class="w"> </span><span class="p">(</span>
+</span><span id="__span-40-17"><a id="__codelineno-40-17" name="__codelineno-40-17" href="#__codelineno-40-17"></a><span class="w">    </span><span class="n">evaluated_expression_id</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">UUID</span><span class="p">,</span>
+</span><span id="__span-40-18"><a id="__codelineno-40-18" name="__codelineno-40-18" href="#__codelineno-40-18"></a><span class="w">    </span><span class="o">&lt;</span><span class="n">your</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="n">columns</span><span class="w"> </span><span class="n">here</span><span class="o">&gt;</span>
+</span><span id="__span-40-19"><a id="__codelineno-40-19" name="__codelineno-40-19" href="#__codelineno-40-19"></a>
+</span><span id="__span-40-20"><a id="__codelineno-40-20" name="__codelineno-40-20" href="#__codelineno-40-20"></a><span class="w">    </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="k">FOREIGN</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">evaluated_expression_id</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">decision_tracker</span><span class="p">.</span><span class="n">evaluated_expression</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+</span><span id="__span-40-21"><a id="__codelineno-40-21" name="__codelineno-40-21" href="#__codelineno-40-21"></a><span class="p">);</span>
+</span></code></pre></div>
 <h2 id="interactive-viewing-using-the-grafana-panel">Interactive viewing using the Grafana panel</h2>
-<p>TODO</p>
+<p>Refer to the documentation of the <a href="https://github.com/keeganmjgreen/keegangreen-decisiontracker-panel/tree/master/src">DecisionTracker Grafana panel</a>.</p>
+<p style="margin-bottom:200px;"></p>
 
 
 

@@ -1,3 +1,5 @@
+# https://app.codeimage.dev/
+
 import datetime as dt
 
 from decisiontracker import Int
@@ -9,7 +11,7 @@ my_comparison = my_sum.times(c=3).geq(
     Int(d=4).minus(Int(1).divided_by(f=5))
 ).with_name("my_comparison")
 
-output = my_comparison.or(g=False).and(h=True).with_name("output")
+output = my_comparison.or_(g=False).and_(h=True).with_name("output")
 
 with Engine(url=...).connect() as conn:
-    output.to_db(conn, timestamp=dt.datetime.now(dt.timezone.utc))
+    output.to_db(conn, metadata=dict(timestamp=dt.UTC))
